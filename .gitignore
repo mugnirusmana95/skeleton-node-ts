@@ -60,3 +60,8 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
