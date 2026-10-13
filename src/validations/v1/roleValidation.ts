@@ -1,10 +1,16 @@
 import { z } from 'zod'
 
-import { allowedLimit, orderByRegex, allowedStatusDelete } from '~/helpers/paramHelper'
+import { orderByRegex, EStatusDelete, allowedTextStatusDelete, TParamsLimit, ALLOWED_LIMITS } from '~/helpers/paramHelper'
 
 import roleRepository from '~/repositories/v1/roleRepository'
 
-export const listRoleSchema = z.object({
+export type TListRoleQuery = z.infer<typeof listRoleSchema>
+export type TCreateRoleBody = z.infer<typeof createRoleSchema>
+export type TDetailRoleQuery = z.infer<typeof detailRoleSchema>
+export type TUpdateRoleBody = z.infer<typeof updateRoleSchema>
+export type TActivationRoleBody = z.infer<typeof activationRoleSchema>
+
+const listRoleSchema = z.object({
   page: z.coerce
     .number({ message: 'Page must be a number' })
     .int('Page must be an integer')
@@ -14,64 +20,149 @@ export const listRoleSchema = z.object({
     .number({ message: 'Limit must be a number' })
     .int('Limit delete must be an integer')
     .refine(
-      (val) => (allowedLimit as number[]).includes(val),
-      { message: `Limit must be one of: ${allowedLimit.join(', ')}` },
+      (val): val is NonNullable<TParamsLimit> => ALLOWED_LIMITS.includes(val as any),
+      { message: `Limit must be one of: ${ALLOWED_LIMITS.join(', ')}` }
     ),
 
   search: z.string().optional(),
 
   orderBy: z
     .string()
-    .regex(orderByRegex, 'Invalid orderBy format. Example: name,ASC|createdAt,DESC')
+    .regex(orderByRegex, 'Order by invalid format. Example: orderBy:name,ASC or orderBy:name,ASC|createdAt,DESC')
     .optional(),
 
-  statusDelete: z.coerce
-    .number({ message: 'Status delete must be a number' })
-    .int('Status delete must be an integer')
-    .refine(
-      (val) => (allowedStatusDelete as number[]).includes(val),
-      { message: `Status delete must be one of: ${allowedStatusDelete.join(', ')}` },
+  statusDelete: z
+    .preprocess(
+      (val) => (val !== undefined && val !== '' ? Number(val) : EStatusDelete.NONE),
+      z.enum(EStatusDelete, {
+        message: `Status delete allowed value: ${allowedTextStatusDelete}`
+      })
     )
     .optional(),
 })
 
-export type TListRoleQuery = z.infer<typeof listRoleSchema>
-
-export const createRoleSchema = z.object({
+const createRoleSchema = z.object({
   code: z
     .string({ message: 'Code is required' })
     .min(1, 'Code is required')
-    .max(50, 'Code maximum 50 characters')
-    .refine(
-      async (code) => {
-        const data = await roleRepository.findByCodeWithDeleted(code)
-        return !data
-      },
-      { message: 'Code already exist' },
-    ),
+    .max(50, 'Code maximum 50 characters'),
 
   name: z
     .string({ message: 'Name is required' })
     .min(1, 'Name is required')
-    .max(100, 'Name maximum 100 characters')
-    .refine(
-      async (name) => {
-        const data = await roleRepository.findByNameWithDeleted(name)
-        return !data
-      },
-      { message: 'Name already exist' },
-    ),
+    .max(100, 'Name maximum 100 characters'),
 
   isActive: z.boolean().optional().default(true),
+}).superRefine(async (data, ctx) => {
+  const { code, name } = data
+
+  const existingCode = await roleRepository.findBy({
+    field: 'code',
+    value: code,
+    withDeleted: true
+  })
+  if (!existingCode) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['code'],
+      message: 'Code already exist',
+    })
+  }
+
+  const existingName = await roleRepository.findBy({
+    field: 'name',
+    value: name,
+    withDeleted: true
+  })
+  if (!existingName) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['name'],
+      message: 'Name already exist',
+    })
+  }
 })
 
-export type TCreateRoleBody = z.infer<typeof createRoleSchema>
-
-export const detailRoleSchema = z.object({
-  id: z.uuid({
-    message: 'Id must be a valid UUID',
-    version: 'v4'
-  }),
+const detailRoleSchema = z.object({
+  id: z.uuidv4('Id must be a valid UUID'),
 })
 
-export type TDetailRoleQuery = z.infer<typeof detailRoleSchema>
+const updateRoleSchema = z.object({
+  id: z.uuidv4('Id must be a valid UUID'),
+
+  code: z
+    .string({ message: 'Code is required' })
+    .min(1, 'Code is required')
+    .max(50, 'Code maximum 50 characters'),
+
+  name: z
+    .string({ message: 'Name is required' })
+    .min(1, 'Name is required')
+    .max(100, 'Name maximum 100 characters'),
+
+}).superRefine(async (data, ctx) => {
+  const { id, code, name } = data
+
+  const existingCode = await roleRepository.findByExceptBy(
+    { field: 'code', value: code, withDeleted: true },
+    { field: 'id', value: id }
+  )
+
+  if (existingCode) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['code'],
+      message: 'Code already exist',
+    })
+  }
+
+  const existingName = await roleRepository.findByExceptBy(
+    { field: 'name', value: name, withDeleted: true },
+    { field: 'id', value: id }
+  )
+
+  if (existingName) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['name'],
+      message: 'Name already exist',
+    })
+  }
+})
+
+const activationRoleSchema = z.object({
+  id: z.uuidv4('Id must be a valid UUID'),
+
+  isActive: z.boolean('Is active must be a boolean value (true / false)')
+
+}).superRefine(async (data, ctx) => {
+  const { id, isActive } = data
+  if (!isActive && isActive !== false) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['code'],
+      message: 'Is active is required',
+    })
+  }
+
+  const role = await roleRepository.findBy({
+    field: 'id',
+    value: id
+  })
+  if (role && role.isActive === isActive) {
+    const currentMessage = role.isActive ? 'active' : 'inactive'
+    ctx.addIssue({
+      code: 'custom',
+      path: ['name'],
+      message: `Is active already ${currentMessage}`,
+    })
+  }
+})
+
+export default {
+  listRoleSchema,
+  createRoleSchema,
+  detailRoleSchema,
+  updateRoleSchema,
+  activationRoleSchema,
+}

@@ -16,7 +16,9 @@ export default {
   },
 
   create: async (req: Request, res: Response) => {
-    const data = await roleService.create(req.body)
+    const payload = req.body
+
+    const data = await roleService.create(payload)
 
     return response(res, {
       status: 201,
@@ -26,21 +28,63 @@ export default {
   },
 
   getDetail: async (req: Request, res: Response) => {
-    const { id } = req.params
-    const data = await roleService.getDetail(id as string)
+    const id = String(req.params?.id)
+
+    const data = await roleService.getDetail(id)
+
     return response(res, {
       status: 200,
-      data: data,
+      data,
+      message: 'Success',
+    })
+  },
+
+  update: async (req: Request, res: Response) => {
+    const id = String(req.params?.id)
+    const payload = req.body
+
+    const data = await roleService.update(id, payload)
+
+    return response(res, {
+      status: 200,
+      data,
+      message: 'Success',
+    })
+  },
+
+  activation: async (req: Request, res: Response) => {
+    const id = String(req.params?.id)
+    const payload = req.body
+
+    const data = await roleService.activation(id, payload)
+
+    return response(res, {
+      status: 200,
+      data,
       message: 'Success',
     })
   },
 
   delete: async (req: Request, res: Response) => {
-    const { id } = req.params
-    const data = await roleService.delete(id as string)
+    const id = String(req.params?.id)
+
+    const data = await roleService.delete(id)
+
     return response(res, {
       status: 200,
-      data: data,
+      data,
+      message: 'Success',
+    })
+  },
+
+  permanentDelete: async (req: Request, res: Response) => {
+    const id = String(req.params?.id)
+
+    const data = await roleService.permanentDelete(id)
+
+    return response(res, {
+      status: 200,
+      data,
       message: 'Success',
     })
   }

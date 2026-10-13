@@ -3,7 +3,7 @@ import { ZodType } from 'zod'
 
 import { response } from '~/helpers/responseHelper'
 
-type TValidationTarget = 'body' | 'query' | 'params'
+type TValidationTarget = 'body' | 'query' | 'params' | 'req'
 
 const formatZodError = (issues: { path: PropertyKey[], message: string }[]) => {
   const object = Object.fromEntries(
@@ -26,7 +26,11 @@ export const validate = (
   target: TValidationTarget = 'body',
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const result = await schema.safeParseAsync(req[target])
+    const dataToValidate = target === 'req'
+      ? { params: req.params, body: req.body, query: req.query }
+      : req[target]
+
+    const result = await schema.safeParseAsync(dataToValidate)
 
     if (!result.success) {
       const validationResult = formatZodError(result.error.issues)

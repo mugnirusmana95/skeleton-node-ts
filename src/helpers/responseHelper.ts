@@ -33,20 +33,24 @@ export const response = <T = unknown>(
   const { status, message, data, field } = params
 
   const isSuccess = status >= 200 && status < 300
+  const currentMessage = message || defaultMessage[status] || 'Internal Server Error'
 
-  const result: TResponseResult = {
+  const result: TResponseResult<T> = {
     status: status,
     isSuccess: isSuccess,
-    message: message || defaultMessage[status] || 'Internal Server Error',
+    message: currentMessage,
   }
 
-  if (data) {
+  if (data !== undefined) {
     result.data = data
   }
 
-  if (field || status === 422) {
-    result.field = field ?? null
+  if (field !== undefined || status === 422) {
+    result.field = field ?? undefined
   }
 
-  return res.status(status).json(result)
+  res.status(status)
+  res.statusMessage = currentMessage
+
+  return res.json(result)
 }

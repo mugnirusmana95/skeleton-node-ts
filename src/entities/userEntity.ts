@@ -13,11 +13,19 @@ import {
 import { Role } from '~/entities/roleEntity'
 
 export enum EUserStatusEntity {
-  INACTIVE = 1,
-  ACTIVE = 2,
-  DISABLED = 3,
-  BANNED = 4
+  INACTIVE = 1, // User inactive (first register)
+  ACTIVE = 2,   // User active (activation after register)
+  DISABLED = 3, // User disabled (temporarily inactive by admin / system)
+  BANNED = 4    // User banned (permanent inactive by admin / system)
 }
+
+export const allowedUserStatusEntity = Object.values(EUserStatusEntity)
+  .filter((val): val is number => typeof val === 'number')
+
+export const allowedTextUserStatusEntity = Object.keys(EUserStatusEntity)
+  .filter((key) => isNaN(Number(key)))
+  .map((key) => `${EUserStatusEntity[key as keyof typeof EUserStatusEntity]} = ${key}`)
+  .join(', ')
 
 @Entity({ name: 'public.users' })
 export class User {

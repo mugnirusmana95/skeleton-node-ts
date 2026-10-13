@@ -1,6 +1,7 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 
 import { EStatusDelete } from '~/helpers/paramHelper'
+import { entityMapper } from './entityMapperHelper'
 
 type TPaginationParams = {
   page: number
@@ -8,10 +9,24 @@ type TPaginationParams = {
   statusDelete?: EStatusDelete
 }
 
+export type TPaginationResponse<T> = {
+  list: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPage: number
+    hasPrevPage: boolean
+    hasNextPage: boolean
+  }
+}
+
+export type TResGetListPaginate<T> = Promise<TPaginationResponse<T>>
+
 export const paginate = async <T extends ObjectLiteral>(
   query: SelectQueryBuilder<T>,
   params: TPaginationParams,
-) => {
+): Promise<TPaginationResponse<T>> => {
   const { page, limit, statusDelete } = params
 
   const skip = (page - 1) * limit
@@ -20,19 +35,19 @@ export const paginate = async <T extends ObjectLiteral>(
 
   const [data, total] = await query.getManyAndCount()
 
-  const totalPage = Math.max(1, Math.ceil(total / limit))
+  let list = data
+  let withDeleted = true
 
   if (statusDelete === EStatusDelete.NONE) {
-    data.map((item) => {
-      delete item.isDeleted
-      delete item.deletedAt
-
-      return item
-    })
+    withDeleted = false
   }
 
+  const totalPage = Math.max(1, Math.ceil(total / limit))
+
+  list = entityMapper(data, { withDeleted })
+
   return {
-    list: data,
+    list,
     pagination: {
       page,
       limit,

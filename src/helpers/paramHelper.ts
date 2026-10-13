@@ -1,27 +1,20 @@
 import { Request } from 'express'
 
+
 export type TParamsPage = number | undefined
-export type TParamsLimit =
-  | 10
-  | 20
-  | 30
-  | 40
-  | 50
-  | 60
-  | 70
-  | 80
-  | 90
-  | 100
-  | undefined
+
+export const ALLOWED_LIMITS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const
+export type TParamsLimit = (typeof ALLOWED_LIMITS)[number] | undefined
+
 type TOrderDirectionType = 'ASC' | 'DESC'
 export type TOrderByItem = {
   column: string
   direction: TOrderDirectionType
 }
 export enum EStatusDelete {
-  NONE = 1, //select data without deleted data
-  WITH = 2, //select data with deleted data
-  ONLY = 3, //select data only deleted data
+  NONE = 1, // select data without deleted data
+  WITH = 2, // select data with deleted data
+  ONLY = 3, // select data only deleted data
 }
 
 export type TParsedParams = {
@@ -33,10 +26,18 @@ export type TParsedParams = {
   date?: string | undefined
   startDate?: string | undefined
   endDate?: string | undefined
+  withUsers?: '1' | undefined
+  roleId?: string | undefined
 }
 
-export const allowedLimit = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-export const allowedStatusDelete = [1, 2, 3]
+export const allowedStatusDelete = Object.values(EStatusDelete)
+  .filter((val): val is number => typeof val === 'number')
+
+export const allowedTextStatusDelete = Object.keys(EStatusDelete)
+  .filter((key) => isNaN(Number(key)))
+  .map((key) => `${EStatusDelete[key as keyof typeof EStatusDelete]} = ${key}`)
+  .join(', ')
+
 export const orderByRegex =
   /^([a-zA-Z0-9_]+,(ASC|DESC))(\|[a-zA-Z0-9_]+,(ASC|DESC))*$/
 
@@ -48,14 +49,22 @@ const toNumber = (value: unknown): number | undefined => {
 
 const parseLimit = (value: unknown): TParamsLimit => {
   const n = toNumber(value)
-  const allowed: TParamsLimit[] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-  return allowed.includes(n as TParamsLimit) ? (n as TParamsLimit) : undefined
+
+  return ALLOWED_LIMITS.includes(n as (typeof ALLOWED_LIMITS)[number])
+    ? (n as TParamsLimit)
+    : undefined
 }
 
 const parseStatusDelete = (value: unknown): EStatusDelete => {
   const n = toNumber(value)
-  const allowed: EStatusDelete[] = [1, 2, 3]
-  return allowed.includes(n as EStatusDelete) ? (n as EStatusDelete) : EStatusDelete.NONE
+
+  if (n === undefined) {
+    return EStatusDelete.NONE
+  }
+
+  return allowedStatusDelete.includes(n)
+    ? (n as EStatusDelete)
+    : EStatusDelete.NONE
 }
 
 const parseOrderBy = (value: unknown): TOrderByItem[] => {
@@ -100,6 +109,12 @@ export const parseParams = (req: Request): TParsedParams => {
   const endDate =
     typeof q.endDate === 'string' && q.endDate ? q.endDate : undefined
 
+  const withUsers =
+    typeof q.withUsers === 'string' && q.withUsers === '1' ? q.withUsers : undefined
+
+  const roleId =
+    typeof q.roleId === 'string' && q.roleId ? q.roleId : undefined
+
   return {
     page,
     limit,
@@ -108,6 +123,8 @@ export const parseParams = (req: Request): TParsedParams => {
     statusDelete,
     date,
     startDate,
-    endDate
+    endDate,
+    withUsers,
+    roleId
   }
 }

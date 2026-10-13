@@ -13,7 +13,11 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
+import { errorMiddleware } from '~/middlewares/errorMiddleware'
+
 app.use('/api/v1', routesV1)
+
+app.use(errorMiddleware)
 
 AppDataSource.initialize()
   .then(() => {
