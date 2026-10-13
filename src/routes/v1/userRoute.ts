@@ -26,6 +26,12 @@ app.get(
   userController.getDetail
 )
 
+app.get(
+  '/status/:id',
+  validate(userValidation.detailUserSchema, 'params'),
+  userController.getByStatus
+)
+
 app.patch(
   '/:id',
   validate(userValidation.detailUserSchema, 'params'),

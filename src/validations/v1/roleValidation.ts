@@ -18,11 +18,7 @@ const listRoleSchema = z.object({
 
   limit: z.coerce
     .number({ message: 'Limit must be a number' })
-    .int('Limit delete must be an integer')
-    .refine(
-      (val): val is NonNullable<TParamsLimit> => ALLOWED_LIMITS.includes(val as any),
-      { message: `Limit must be one of: ${ALLOWED_LIMITS.join(', ')}` }
-    ),
+    .int('Limit delete must be an integer'),
 
   search: z.string().optional(),
 
@@ -39,6 +35,16 @@ const listRoleSchema = z.object({
       })
     )
     .optional(),
+}).superRefine(async (data, ctx) => {
+  const { limit } = data
+
+  if (!ALLOWED_LIMITS.includes(limit as (typeof ALLOWED_LIMITS)[number])) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['limit'],
+      message: `Limit must be one of: ${ALLOWED_LIMITS.join(', ')}`,
+    })
+  }
 })
 
 const createRoleSchema = z.object({
@@ -61,7 +67,7 @@ const createRoleSchema = z.object({
     value: code,
     withDeleted: true
   })
-  if (!existingCode) {
+  if (existingCode) {
     ctx.addIssue({
       code: 'custom',
       path: ['code'],
@@ -74,7 +80,7 @@ const createRoleSchema = z.object({
     value: name,
     withDeleted: true
   })
-  if (!existingName) {
+  if (existingName) {
     ctx.addIssue({
       code: 'custom',
       path: ['name'],

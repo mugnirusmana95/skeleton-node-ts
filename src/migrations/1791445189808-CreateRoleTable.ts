@@ -16,9 +16,9 @@ export class CreateRoleTable1791445189808 implements MigrationInterface {
                 "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "deletedAt" TIMESTAMP WITH TIME ZONE NULL,
                 
-                CONSTRAINT "PK_roles_id" PRIMARY KEY ("id"),
-                CONSTRAINT "UQ_users_code" UNIQUE ("code"),
-                CONSTRAINT "UQ_users_name" UNIQUE ("name")
+                CONSTRAINT "PK_${this.tableName}_id" PRIMARY KEY ("id"),
+                CONSTRAINT "UQ_${this.tableName}_code" UNIQUE ("code"),
+                CONSTRAINT "UQ_${this.tableName}_name" UNIQUE ("name")
             )`)
     }
 

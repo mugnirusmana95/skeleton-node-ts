@@ -11,7 +11,7 @@ import {
 
 import { User } from '~/entities/userEntity'
 
-@Entity({ name: 'public.roles' })
+@Entity({ schema: 'public', name: 'roles' })
 export class Role {
   @PrimaryGeneratedColumn("uuid")
   id: string

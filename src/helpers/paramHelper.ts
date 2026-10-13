@@ -26,8 +26,9 @@ export type TParsedParams = {
   date?: string | undefined
   startDate?: string | undefined
   endDate?: string | undefined
-  withUsers?: '1' | undefined
+  fullRelation?: '1' | undefined
   roleId?: string | undefined
+  userId?: string | undefined
 }
 
 export const allowedStatusDelete = Object.values(EStatusDelete)
@@ -109,11 +110,14 @@ export const parseParams = (req: Request): TParsedParams => {
   const endDate =
     typeof q.endDate === 'string' && q.endDate ? q.endDate : undefined
 
-  const withUsers =
-    typeof q.withUsers === 'string' && q.withUsers === '1' ? q.withUsers : undefined
+  const fullRelation =
+    typeof q.fullRelation === 'string' && q.fullRelation === '1' ? q.fullRelation : undefined
 
   const roleId =
     typeof q.roleId === 'string' && q.roleId ? q.roleId : undefined
+
+  const userId =
+    typeof q.userId === 'string' && q.userId ? q.userId : undefined
 
   return {
     page,
@@ -124,7 +128,8 @@ export const parseParams = (req: Request): TParsedParams => {
     date,
     startDate,
     endDate,
-    withUsers,
-    roleId
+    fullRelation,
+    roleId,
+    userId
   }
 }

@@ -36,6 +36,16 @@ export default {
     })
   },
 
+  getByStatus: async (req: Request, res: Response) => {
+    const data = await userService.getByStatus(1)
+
+    return response(res, {
+      status: 200,
+      data,
+      message: 'Success',
+    })
+  },
+
   update: async (req: Request, res: Response) => {
     const id = String(req.params?.id)
     const paylaod = req.body

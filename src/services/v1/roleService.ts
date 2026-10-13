@@ -34,7 +34,7 @@ export default {
       return await roleRepository.findBy({
         field: 'id',
         value: data.id
-      })
+      }, trx)
     })
   },
 
@@ -138,9 +138,10 @@ export default {
       }, trx)
       if (users.length > 0) throw new BadRequest(`Role already in used, can not delete role ${role.name}`)
 
-      await roleRepository.permanentDeleteBy({
+      await roleRepository.deleteBy({
         field: 'id',
-        value: role.id
+        value: role.id,
+        permanentDelete: true
       }, trx)
 
       return role

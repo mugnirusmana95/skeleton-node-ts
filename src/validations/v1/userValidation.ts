@@ -6,13 +6,13 @@ import { ALLOWED_LIMITS, orderByRegex, allowedTextStatusDelete, EStatusDelete, T
 
 import roleRepository from '~/repositories/v1/roleRepository'
 import userRepository from '~/repositories/v1/userRepository'
+import profileRepository from '~/repositories/v1/profileRepository'
 
 export type TListUserQuery = z.infer<typeof listUserSchema>
 export type TCreateUserBody = z.infer<typeof createUserSchema>
 export type TDetailUserQuery = z.infer<typeof detailUserSchema>
 export type TUpdateUserBody = z.infer<typeof updateUserSchema>
 export type TChangeStatusUserBody = z.infer<typeof changeStatusUserSchema>
-export type TChangePasswordUserBody = z.infer<typeof changePasswordUserSchema>
 
 const listUserSchema = z.object({
   page: z.coerce
@@ -22,20 +22,19 @@ const listUserSchema = z.object({
 
   limit: z.coerce
     .number({ message: 'Limit must be a number' })
-    .int('Limit delete must be an integer')
-    .refine(
-      (val): val is NonNullable<TParamsLimit> => ALLOWED_LIMITS.includes(val as any),
-      { message: `Limit must be one of: ${ALLOWED_LIMITS.join(', ')}` }
-    ),
+    .int('Limit delete must be an integer'),
 
-  search: z.string().optional(),
+  search: z.string().optional()
+    .or(z.literal('')),
 
-  roleId: z.string().optional(),
+  roleId: z.string().optional()
+    .or(z.literal('')),
 
   orderBy: z
     .string()
     .regex(orderByRegex, 'Order by invalid format. Example: orderBy:name,ASC or orderBy:name,ASC|createdAt,DESC')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 
   statusDelete: z
     .preprocess(
@@ -44,7 +43,18 @@ const listUserSchema = z.object({
         message: `Status delete allowed value: ${allowedTextStatusDelete}`
       })
     )
-    .optional(),
+    .optional()
+    .or(z.literal('')),
+}).superRefine(async (data, ctx) => {
+  const { limit } = data
+
+  if (!ALLOWED_LIMITS.includes(limit as (typeof ALLOWED_LIMITS)[number])) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['limit'],
+      message: `Limit must be one of: ${ALLOWED_LIMITS.join(', ')}`,
+    })
+  }
 })
 
 const createUserSchema = z.object({
@@ -55,36 +65,55 @@ const createUserSchema = z.object({
 
   roleId: z
     .string({ message: 'Role is required' })
-    .min(1, 'Role is required')
-    .refine(
-      async (roleId) => {
-        const data = await roleRepository.findBy({
-          field: 'id',
-          value: roleId
-        })
-        return data
-      },
-      { message: 'Role does not exist' },
-    ),
-
-  firstName: z
-    .string({ message: 'First name is required' })
-    .min(2, 'First name is required')
-    .max(100, 'First name maximum 50 characters'),
-
-  lastName: z
-    .string({ message: 'Last name is required' })
-    .min(2, 'Last name is required')
-    .max(100, 'Last name maximum 50 characters')
-    .optional(),
+    .min(1, 'Role is required'),
 
   status: z
     .enum(EUserStatusEntity, {
       message: `Status allowed value: ${allowedTextUserStatusEntity}`
     })
     .optional(),
+
+  firstName: z
+    .string({ message: 'First name is required' })
+    .min(2, 'First name minimum 2 characters')
+    .max(100, 'First name maximum 50 characters'),
+
+  middleName: z
+    .string({ message: 'Middle name is required' })
+    .min(2, 'Middle name minimum 2 characters')
+    .max(100, 'Middle name maximum 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  lastName: z
+    .string({ message: 'Last name is required' })
+    .min(2, 'Last name minimum 2 characters')
+    .max(100, 'Last name maximum 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  phoneCode: z
+    .string({ message: 'Phone code is required' })
+    .min(2, 'Phone code minimum 2 characters')
+    .max(100, 'Phone code maximum 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  phoneNumber: z
+    .string({ message: 'Phone number is required' })
+    .min(2, 'Phone number minimum 2 characters')
+    .max(100, 'Phone number maximum 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  address: z
+    .string({ message: 'Address is required' })
+    .min(2, 'Address minimum 2 characters')
+    .max(255, 'Address maximum 255 characters')
+    .optional()
+    .or(z.literal(''))
 }).superRefine(async (data, ctx) => {
-  const { email, roleId } = data
+  const { email, roleId, firstName, phoneCode, phoneNumber } = data
 
   const existingEmail = await userRepository.findBy(
     { field: 'email', value: email, withDeleted: true },
@@ -111,6 +140,42 @@ const createUserSchema = z.object({
       })
     }
   }
+
+  if (!firstName || String(firstName) === "") {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['firstName'],
+      message: 'First name is required',
+    })
+  }
+
+  if (phoneCode && !phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneNumber'],
+      message: 'Phone number is required if phone code is filled',
+    })
+  } else if (!phoneCode && phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneCode'],
+      message: 'Phone code is required if phone number is filled',
+    })
+  }
+
+  if (phoneNumber) {
+    const existingPhoneNumber = await profileRepository.findBy(
+      { field: 'phoneNumber', value: phoneNumber, withDeleted: true },
+    )
+
+    if (existingPhoneNumber) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['phoneNumber'],
+        message: 'Phone number already exist',
+      })
+    }
+  }
 })
 
 const detailUserSchema = z.object({
@@ -124,26 +189,56 @@ const updateUserSchema = z.object({
     .string({ message: 'Email is required' })
     .min(1, 'Email is required')
     .max(50, 'Email maximum 50 characters')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 
   roleId: z
     .uuid()
     .min(1, 'Role is required')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 
   firstName: z
     .string({ message: 'First name is required' })
     .min(2, 'First name is required')
-    .max(100, 'First name maximum 50 characters')
-    .optional(),
+    .max(100, 'First name maximum 50 characters'),
+
+  middleName: z
+    .string({ message: 'Middle name is required' })
+    .min(2, 'Middle name is required')
+    .max(100, 'Middle name maximum 50 characters')
+    .optional()
+    .or(z.literal('')),
 
   lastName: z
     .string({ message: 'Last name is required' })
     .min(2, 'Last name is required')
     .max(100, 'Last name maximum 50 characters')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
+
+  phoneCode: z
+    .string({ message: 'Phone code is required' })
+    .min(2, 'Phone code is required')
+    .max(100, 'Phone code maximum 50 characters')
+    .optional()
+    .or(z.literal('')),
+
+  phoneNumber: z
+    .string({ message: 'Phone number is required' })
+    .min(2, 'Phone number is required')
+    .max(100, 'Phone number maximum 50 characters')
+    .optional()
+    .or(z.literal('')),
+
+  address: z
+    .string({ message: 'Address is required' })
+    .min(2, 'Address is required')
+    .max(255, 'Address maximum 50 characters')
+    .optional()
+    .or(z.literal(''))
 }).superRefine(async (data, ctx) => {
-  const { id, email, roleId } = data
+  const { id, email, roleId, firstName, phoneCode, phoneNumber } = data
 
   if (email) {
     const existingEmail = await userRepository.findByExceptBy(
@@ -170,6 +265,43 @@ const updateUserSchema = z.object({
         code: 'custom',
         path: ['role'],
         message: 'Role does not exist',
+      })
+    }
+  }
+
+  if (!firstName || String(firstName) === "") {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['firstName'],
+      message: 'First name is required',
+    })
+  }
+
+  if (phoneCode && !phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneNumber'],
+      message: 'Phone number is required if phone code is filled',
+    })
+  } else if (!phoneCode && phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneCode'],
+      message: 'Phone code is required if phone number is filled',
+    })
+  }
+
+  if (phoneNumber) {
+    const existingPhoneNumber = await profileRepository.findByExceptBy(
+      { field: 'phoneNumber', value: phoneNumber, withDeleted: true },
+      { field: 'userId', value: id }
+    )
+
+    if (existingPhoneNumber) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['phoneNumber'],
+        message: 'Phone number already exist',
       })
     }
   }

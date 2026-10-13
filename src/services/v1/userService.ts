@@ -12,8 +12,10 @@ import { parseParams } from "~/helpers/paramHelper"
 import roleRepository from "~/repositories/v1/roleRepository"
 import userRepository, {
   TResGetListPaginateUser,
-  TResFindUser
+  TResFindUser,
+  TResGetUser,
 } from "~/repositories/v1/userRepository"
+import profileRepository from "~/repositories/v1/profileRepository"
 
 import {
   TCreateUserBody,
@@ -44,17 +46,30 @@ export default {
       console.log('password ', password)
       const hasedPassword = await generateHash(password)
 
-      const data = await userRepository.create({
+      const dataUser = await userRepository.create({
         email: payload.email,
         password: hasedPassword,
         roleId: role.id,
         status: payload.status ?? EUserStatusEntity.INACTIVE,
       }, trx)
 
+      await profileRepository.create({
+        userId: dataUser.id,
+        firstName: payload.firstName,
+        middleName: payload.middleName,
+        lastName: payload.lastName,
+        phoneCode: payload.phoneCode,
+        phoneNumber: payload.phoneNumber,
+        address: payload.address,
+      }, trx)
+
       const user = await userRepository.findBy({
         field: 'id',
-        value: data.id,
-        withRole: true
+        value: dataUser.id,
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
       if (!user) throw new NotFound('User not found')
 
@@ -66,7 +81,10 @@ export default {
     const user = await userRepository.findBy({
       field: 'id',
       value: id,
-      withRole: true
+      withRelation: [
+        { relation: 'user.profile', alias: 'profile' },
+        { relation: 'user.role', alias: 'role' }
+      ]
     })
     if (!user) throw new NotFound('User not found')
 
@@ -92,7 +110,10 @@ export default {
       return await userRepository.findBy({
         field: 'id',
         value: id,
-        withRole: true
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
     })
   },
@@ -115,7 +136,10 @@ export default {
       return await userRepository.findBy({
         field: 'id',
         value: id,
-        withRole: true
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
     })
   },
@@ -146,7 +170,10 @@ export default {
       return await userRepository.findBy({
         field: 'id',
         value: id,
-        withRole: true
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
     })
   },
@@ -156,7 +183,10 @@ export default {
       const user = await userRepository.findBy({
         field: 'id',
         value: id,
-        withRole: true
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
       if (!user) throw new NotFound('User not found')
 
@@ -169,18 +199,39 @@ export default {
     })
   },
 
+  getByStatus: async (status: number): TResGetUser => {
+    return await userRepository.getBy({
+      field: 'status',
+      value: status,
+      withRelation: [
+        { relation: 'user.profile', alias: 'profile' },
+        { relation: 'user.role', alias: 'role' }
+      ],
+      withOrderBy: [
+        { orderBy: 'profile.createdAt', direction: 'DESC' },
+        { orderBy: 'role.code' },
+        { orderBy: 'role.updatedAt', direction: 'ASC' },
+      ],
+      withDeleted: true
+    })
+  },
+
   permanentDelete: async (id: string): TResFindUser => {
     return await AppDataSource.transaction(async (trx) => {
       const user = await userRepository.findBy({
         field: 'id',
         value: id,
-        withRole: true
+        withRelation: [
+          { relation: 'user.profile', alias: 'profile' },
+          { relation: 'user.role', alias: 'role' }
+        ]
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await userRepository.permanentDeleteBy({
+      await userRepository.deleteBy({
         field: 'id',
-        value: user.id
+        value: user.id,
+        permanentDelete: true
       }, trx)
 
       return user

@@ -7,10 +7,12 @@ import {
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
-  AfterLoad
+  AfterLoad,
+  OneToOne
 } from 'typeorm'
 
 import { Role } from '~/entities/roleEntity'
+import { Profile } from '~/entities/profileEntity'
 
 export enum EUserStatusEntity {
   INACTIVE = 1, // User inactive (first register)
@@ -27,7 +29,7 @@ export const allowedTextUserStatusEntity = Object.keys(EUserStatusEntity)
   .map((key) => `${EUserStatusEntity[key as keyof typeof EUserStatusEntity]} = ${key}`)
   .join(', ')
 
-@Entity({ name: 'public.users' })
+@Entity({ schema: 'public', name: 'users' })
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string
@@ -60,6 +62,9 @@ export class User {
   @ManyToOne(() => Role)
   @JoinColumn({ name: 'roleId' })
   role!: Role
+
+  @OneToOne(() => Profile, (profile) => profile.user)
+  profile: Profile
 
   @AfterLoad()
   computeStatusText() {

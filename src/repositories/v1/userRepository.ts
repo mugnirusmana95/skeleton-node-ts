@@ -1,4 +1,4 @@
-import { EntityManager, FindOptionsWhere, UpdateResult, DeleteResult, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, FindOptionsWhere, UpdateResult, DeleteResult } from 'typeorm'
 
 import { AppDataSource } from '~/configs/dataSource'
 
@@ -8,27 +8,30 @@ import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
 import { entityMapper } from '~/helpers/entityMapperHelper'
 
+import entity, {
+  TDynamicFieldValue,
+  TDynamicFieldValueWithRelation,
+  TDynamicFieldValueWithDeleted,
+  TDynamicQueryOptions,
+  TDynamicQueryDeleteOptions,
+  TDynamicFieldValueDeleteOption,
+  TDynamicQueryOptionsGet,
+  TDynamicFieldValueWithOrderBy
+} from '~/helpers/entityHelper'
+
 type TCreateUser = Pick<
   User,
-  'email' | 'password' | 'roleId' | 'status'
+  'email'
+  | 'password'
+  | 'roleId'
+  | 'status'
 >
 type TUpdateUser = Partial<TCreateUser>
 type TUserField = Exclude<
   keyof User,
-  'users' | 'isDeleted' | 'computeIsDeleted'
+  | 'isDeleted'
+  | 'computeIsDeleted'
 >
-type TDynamicFieldValue<K extends TUserField> = {
-  field: K
-  value: User[K]
-}
-type TDynamicFieldValueWithRole<K extends TUserField> =
-  TDynamicFieldValue<K> & {
-    withRole?: boolean
-  }
-type TDynamicFieldValueWithDeleted<K extends TUserField> =
-  TDynamicFieldValue<K> & {
-    withDeleted?: boolean
-  }
 
 export type TResGetListPaginateUser = TResGetListPaginate<User>
 export type TResFindUser = Promise<User | null>
@@ -36,38 +39,10 @@ export type TResGetUser = Promise<User[]>
 export type TResCreateUser = Promise<User>
 export type TResUpdateUser = Promise<UpdateResult>
 export type TResSoftDeleteUser = TResUpdateUser
-export type TResDeleteUser = Promise<DeleteResult>
+export type TResDeleteUser = DeleteResult
 
 const repo = (manager?: EntityManager) =>
   (manager ?? AppDataSource).getRepository(User)
-
-const withRoleData = (
-  query: SelectQueryBuilder<User>,
-  options?: { withRole?: boolean, withDeleted?: boolean }
-) => {
-  const withRole = options?.withRole ?? false
-  const withDeleted = options?.withDeleted ?? false
-
-  if (withRole) {
-    query.leftJoinAndSelect('user.role', 'role')
-    if (withDeleted) {
-      query.addSelect('role.deletedAt')
-    }
-  }
-
-  return query
-}
-
-const withDeletedData = (
-  query: SelectQueryBuilder<User>,
-  withDeleted?: boolean
-) => {
-  if (withDeleted) {
-    query.addSelect('user.deletedAt')
-  }
-
-  return query
-}
 
 const getListPaginate = async (
   params: TParsedParams,
@@ -79,24 +54,33 @@ const getListPaginate = async (
     search = '',
     roleId = null,
     orderBy = [],
-    statusDelete
+    statusDelete,
+    fullRelation
   } = params
 
   const query = repo(trx)
     .createQueryBuilder('user')
-    .leftJoinAndSelect('user.role', 'role')
 
-  if (statusDelete === EStatusDelete.WITH) {
+  if (fullRelation) {
+    query.leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('user.profile', 'profile')
+
+  }
+
+  if (statusDelete === EStatusDelete.WITH || statusDelete === EStatusDelete.ONLY) {
     query
       .withDeleted()
       .addSelect('user.deletedAt')
-      .addSelect('role.deletedAt')
-  } else if (statusDelete === EStatusDelete.ONLY) {
-    query
-      .withDeleted()
-      .addSelect('user.deletedAt')
-      .addSelect('role.deletedAt')
-      .andWhere('user.deletedAt IS NOT NULL')
+
+    if (fullRelation) {
+      query
+        .addSelect('role.deletedAt')
+        .addSelect('profile.deletedAt')
+    }
+  }
+
+  if (statusDelete === EStatusDelete.ONLY) {
+    query.andWhere('user.deletedAt IS NOT NULL')
   }
 
   if (search) {
@@ -132,67 +116,99 @@ const getListPaginate = async (
   return paginate(query, { page, limit, statusDelete })
 }
 
+const find = async (
+  params: TDynamicQueryOptions,
+  trx?: EntityManager,
+): Promise<User | null> => {
+  const { where, withRelation, withDeleted } = params
+  const query = repo(trx).createQueryBuilder('role')
+
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.condition(query, where)
+
+  return query.getOne()
+}
+
+const get = async (
+  params: TDynamicQueryOptionsGet,
+  trx?: EntityManager,
+): Promise<User[]> => {
+  const { where, withRelation, withDeleted, withOrderBy } = params
+  const query = repo(trx).createQueryBuilder('role')
+
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.condition(query, where)
+  entity.orderBy(query, withOrderBy)
+
+  return query.getMany()
+}
+
 const findBy = async <K extends TUserField>(
-  params: TDynamicFieldValueWithRole<K> &
-    TDynamicFieldValueWithDeleted<K>,
+  params: TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K>,
   trx?: EntityManager,
 ): TResFindUser => {
   const {
     field,
     value,
-    withRole,
+    withRelation,
     withDeleted
   } = params
 
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  withRoleData(query, { withRole, withDeleted })
-  withDeletedData(query, withDeleted)
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
 
-  const user = await query
-    .where(`user.${field} = :value`, { value })
-    .getOne()
+  query.where(`user.${field} = :value`, { value })
 
-  return entityMapper(user, { withDeleted })
+  const data = await query.getOne()
+
+  return entityMapper(data, { withDeleted })
 }
 
 const getBy = async<K extends TUserField>(
-  params: TDynamicFieldValueWithRole<K> &
-    TDynamicFieldValueWithDeleted<K>,
+  params: TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K> &
+    TDynamicFieldValueWithOrderBy<User, K>,
   trx?: EntityManager
 ): TResGetUser => {
   const {
     field,
     value,
-    withRole,
-    withDeleted
+    withRelation,
+    withDeleted,
+    withOrderBy
   } = params
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  withRoleData(query, { withRole, withDeleted })
-  withDeletedData(query, withDeleted)
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.orderBy(query, withOrderBy)
 
-  const users = await query
-    .where(`user.${field} = :value`, { value })
-    .getMany()
+  query.where(`user.${field} = :value`, { value })
 
-  return entityMapper(users, { withDeleted })
+  const data = await query.getMany()
+
+  return entityMapper(data, { withDeleted })
 }
 
 const findByExceptBy = async <
   K extends TUserField,
   E extends TUserField
 >(
-  findParams: TDynamicFieldValueWithRole<K> &
-    TDynamicFieldValueWithDeleted<K>,
-  exceptParams: TDynamicFieldValue<E>,
+  findParams: TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K>,
+  exceptParams: TDynamicFieldValue<User, E>,
   trx?: EntityManager
 ): TResFindUser => {
   const findColumn = findParams.field
   const findValue = findParams.value
-  const withRole = findParams.withRole
+  const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
@@ -200,8 +216,8 @@ const findByExceptBy = async <
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  withRoleData(query, { withRole, withDeleted })
-  withDeletedData(query, withDeleted)
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
 
   const user = await query
     .where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
@@ -214,29 +230,32 @@ const getByExceptBy = async <
   K extends TUserField,
   E extends TUserField
 >(
-  findParams: TDynamicFieldValueWithRole<K> &
-    TDynamicFieldValueWithDeleted<K>,
-  exceptParams: TDynamicFieldValue<E>,
+  findParams: TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K> &
+    TDynamicFieldValueWithOrderBy<User, K>,
+  exceptParams: TDynamicFieldValue<User, E>,
   trx?: EntityManager
 ): TResGetUser => {
   const findColumn = findParams.field
   const findValue = findParams.value
-  const withRole = findParams.withRole
+  const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
+  const withOrderBy = findParams.withOrderBy
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
 
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  withRoleData(query, { withRole, withDeleted })
-  withDeletedData(query, withDeleted)
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.orderBy(query, withOrderBy)
 
-  const users = await query
-    .where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
-    .getMany()
+  query.where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
 
-  return entityMapper(users, { withDeleted })
+  const data = await query.getMany()
+
+  return entityMapper(data, { withDeleted })
 }
 
 const create = async (
@@ -250,10 +269,39 @@ const create = async (
   return repo(trx).save(data)
 }
 
+const update = async (
+  params: TDynamicQueryOptions,
+  data: TUpdateUser,
+  trx?: EntityManager,
+): Promise<UpdateResult> => {
+  if (Object.keys(data).length === 0) {
+    throw new Error('Data cannot be empty')
+  }
+
+  const query = repo(trx).createQueryBuilder('user')
+    .select('user.id')
+
+  const { where, withRelation, withDeleted } = params
+
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.condition(query, where)
+
+  const result = await query.getMany()
+
+  const ids = result.map((item) => item.id)
+
+  if (ids.length === 0) {
+    return { affected: 0, raw: [], generatedMaps: [] }
+  }
+
+  return repo(trx).update(ids, data)
+}
+
 const updateBy = async <
   K extends TUserField
 >(
-  params: TDynamicFieldValue<K>,
+  params: TDynamicFieldValue<User, K>,
   data: TUpdateUser,
   trx?: EntityManager,
 ): TResUpdateUser => {
@@ -268,34 +316,59 @@ const updateBy = async <
   )
 }
 
-const deleteBy = async <K extends TUserField>(
-  params: TDynamicFieldValue<K>,
+const deleted = async (
+  params: TDynamicQueryDeleteOptions,
   trx?: EntityManager,
-): TResSoftDeleteUser => {
-  const { field, value } = params
-  return repo(trx).softDelete({
-    [field]: value,
-  })
+): Promise<TResSoftDeleteUser | TResDeleteUser> => {
+  const query = repo(trx).createQueryBuilder('user')
+
+  const { where, withRelation, withDeleted, permanentDelete } = params
+
+  entity.with(query, withRelation, withDeleted)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.condition(query, where)
+
+  const data = await query.getMany()
+
+  const ids = data.map((item) => item.id)
+
+  if (ids.length === 0) {
+    return { affected: 0, raw: [], generatedMaps: [] }
+  }
+
+  if (permanentDelete) {
+    return repo(trx).delete(ids)
+  }
+
+  return repo(trx).softDelete(ids)
 }
 
-const permanentDeleteBy = async <K extends TUserField>(
-  params: TDynamicFieldValue<K>,
+const deleteBy = async <K extends TUserField>(
+  params: TDynamicFieldValueDeleteOption<User, K>,
   trx?: EntityManager,
-): TResDeleteUser => {
-  const { field, value } = params
-  return repo(trx).delete({
+): Promise<TResSoftDeleteUser | TResDeleteUser> => {
+  const { field, value, permanentDelete } = params
+  if (permanentDelete) {
+    return repo(trx).delete({
+      [field]: value,
+    })
+  }
+  return repo(trx).softDelete({
     [field]: value,
   })
 }
 
 export default {
   getListPaginate,
+  find,
+  get,
   findBy,
   getBy,
   findByExceptBy,
   getByExceptBy,
   create,
   updateBy,
-  deleteBy,
-  permanentDeleteBy,
+  update,
+  deleted,
+  deleteBy
 }
