@@ -200,9 +200,29 @@ export default {
   },
 
   getByStatus: async (status: number): TResGetUser => {
+    // return await userRepository.get({
+    //   where: {
+    //     condition: 'status = :status',
+    //     value: { status }
+    //   },
+    //   withSelect: ['profile.id', 'user.id', 'role.id'],
+    //   withRelation: [
+    //     { relation: 'user.profile', alias: 'profile' },
+    //     { relation: 'user.role', alias: 'role' }
+    //   ],
+    //   withOrderBy: [
+    //     { orderBy: 'profile.id', direction: 'DESC' },
+    //     { orderBy: 'user.id' },
+    //     { orderBy: 'role.id', direction: 'ASC' },
+    //   ],
+    //   withGroupBy: ['profile.id', 'user.id', 'role.id'],
+    //   withDeleted: true
+    // })
+
     return await userRepository.getBy({
       field: 'status',
       value: status,
+      withSelect: ['profile.id', 'user.id', 'role.id'],
       withRelation: [
         { relation: 'user.profile', alias: 'profile' },
         { relation: 'user.role', alias: 'role' }
@@ -212,7 +232,8 @@ export default {
         { orderBy: 'role.code' },
         { orderBy: 'role.updatedAt', direction: 'ASC' },
       ],
-      withDeleted: true
+      withGroupBy: ['profile.id', 'user.id', 'role.id'],
+      // withDeleted: true
     })
   },
 

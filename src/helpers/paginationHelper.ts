@@ -1,7 +1,6 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 
 import { EStatusDelete } from '~/helpers/paramHelper'
-import { entityMapper } from './entityMapperHelper'
 
 type TPaginationParams = {
   page: number
@@ -35,7 +34,6 @@ export const paginate = async <T extends ObjectLiteral>(
 
   const [data, total] = await query.getManyAndCount()
 
-  let list = data
   let withDeleted = true
 
   if (statusDelete === EStatusDelete.NONE) {
@@ -44,10 +42,8 @@ export const paginate = async <T extends ObjectLiteral>(
 
   const totalPage = Math.max(1, Math.ceil(total / limit))
 
-  list = entityMapper(data, { withDeleted })
-
   return {
-    list,
+    list: data,
     pagination: {
       page,
       limit,

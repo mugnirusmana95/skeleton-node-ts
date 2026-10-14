@@ -41,6 +41,10 @@ export class Role {
 
   @AfterLoad()
   computeIsDeleted() {
-    this.isDeleted = this.deletedAt ? true : false
+    if (typeof this.deletedAt === 'undefined') {
+      delete this.isDeleted
+    } else {
+      this.isDeleted = this.deletedAt ? true : false
+    }
   }
 }

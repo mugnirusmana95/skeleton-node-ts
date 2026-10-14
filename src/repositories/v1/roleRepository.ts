@@ -6,17 +6,18 @@ import { Role } from '~/entities/roleEntity'
 
 import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
-import { entityMapper } from '~/helpers/entityMapperHelper'
 
 import entity, {
   TDynamicFieldValue,
+  TDynamicFieldValueWithSelect,
   TDynamicFieldValueWithRelation,
   TDynamicFieldValueWithDeleted,
   TDynamicQueryOptions,
   TDynamicQueryDeleteOptions,
   TDynamicFieldValueDeleteOption,
   TDynamicQueryOptionsGet,
-  TDynamicFieldValueWithOrderBy
+  TDynamicFieldValueWithOrderBy,
+  TDynamicFieldValueWithGroupBy
 } from '~/helpers/entityHelper'
 
 type TCreateRole = Partial<
@@ -109,12 +110,14 @@ const find = async (
   params: TDynamicQueryOptions,
   trx?: EntityManager,
 ): Promise<Role | null> => {
-  const { where, withRelation, withDeleted } = params
+  const { where, withSelect, withRelation, withDeleted, withGroupBy } = params
   const query = repo(trx).createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
   entity.condition(query, where)
+  entity.groupBy(query, withGroupBy)
 
   return query.getOne()
 }
@@ -123,116 +126,139 @@ const get = async (
   params: TDynamicQueryOptionsGet,
   trx?: EntityManager,
 ): Promise<Role[]> => {
-  const { where, withRelation, withDeleted, withOrderBy } = params
+  const { where, withSelect, withRelation, withDeleted, withOrderBy, withGroupBy } = params
   const query = repo(trx).createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
   entity.condition(query, where)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   return query.getMany()
 }
 
 const findBy = async <K extends TRoleField>(
-  params: TDynamicFieldValueWithRelation<Role, K> &
-    TDynamicFieldValueWithDeleted<Role, K>,
+  params: TDynamicFieldValueWithSelect<Role, K> &
+    TDynamicFieldValueWithRelation<Role, K> &
+    TDynamicFieldValueWithDeleted<Role, K> &
+    TDynamicFieldValueWithGroupBy<Role, K>,
   trx?: EntityManager,
 ): TResFindRole => {
-  const { field, value, withRelation, withDeleted } = params
+  const { field, value, withSelect, withRelation, withDeleted, withGroupBy } = params
 
   const query = repo(trx).createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`role.${field} = :value`, { value })
 
+
   const data = await query.getOne()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const getBy = async <K extends TRoleField>(
-  params: TDynamicFieldValueWithRelation<Role, K> &
+  params: TDynamicFieldValueWithSelect<Role, K> &
+    TDynamicFieldValueWithRelation<Role, K> &
     TDynamicFieldValueWithDeleted<Role, K> &
-    TDynamicFieldValueWithOrderBy<Role, K>,
+    TDynamicFieldValueWithOrderBy<Role, K> &
+    TDynamicFieldValueWithGroupBy<Role, K>,
   trx?: EntityManager
 ): TResGetRole => {
-  const { field, value, withRelation, withDeleted, withOrderBy } = params
+  const { field, value, withSelect, withRelation, withDeleted, withOrderBy, withGroupBy } = params
   const query = repo(trx)
     .createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`role.${field} = :value`, { value })
 
   const data = await query.getMany()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const findByExceptBy = async <
   K extends TRoleField,
   E extends TRoleField
 >(
-  findParams: TDynamicFieldValueWithRelation<Role, K> &
-    TDynamicFieldValueWithDeleted<Role, K>,
+  findParams: TDynamicFieldValueWithSelect<Role, K> &
+    TDynamicFieldValueWithRelation<Role, K> &
+    TDynamicFieldValueWithDeleted<Role, K> &
+    TDynamicFieldValueWithGroupBy<Role, K>,
   exceptParams: TDynamicFieldValue<Role, E>,
   trx?: EntityManager
 ): TResFindRole => {
   const findColumn = findParams.field
   const findValue = findParams.value
+  const withSelect = findParams.withSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
+  const withGroupBy = findParams.withGroupBy
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
 
   const query = repo(trx)
     .createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`role.${findColumn} = :findValue AND role.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
 
   const data = await query.getOne()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const getByExceptBy = async <
   K extends TRoleField,
   E extends TRoleField
 >(
-  findParams: TDynamicFieldValueWithRelation<Role, K> &
+  findParams: TDynamicFieldValueWithSelect<Role, K> &
+    TDynamicFieldValueWithRelation<Role, K> &
     TDynamicFieldValueWithDeleted<Role, K> &
-    TDynamicFieldValueWithOrderBy<Role, K>,
+    TDynamicFieldValueWithOrderBy<Role, K> &
+    TDynamicFieldValueWithGroupBy<Role, K>,
   exceptParams: TDynamicFieldValue<Role, E>,
   trx?: EntityManager
 ): TResGetRole => {
   const findColumn = findParams.field
   const findValue = findParams.value
+  const withSelect = findParams.withSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
   const withOrderBy = findParams.withOrderBy
+  const withGroupBy = findParams.withGroupBy
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
 
   const query = repo(trx)
     .createQueryBuilder('role')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'role.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`role.${findColumn} = :findValue AND role.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
 
   const data = await query.getMany()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const create = async (

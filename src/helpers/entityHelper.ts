@@ -27,10 +27,21 @@ type TArrayOrderByType =
   | null
   | undefined
 
+type TArrayGroupByType =
+  | [string, ...string[]]
+  | null
+  | undefined
+type TArrayColumnType =
+  | [string, ...string[]]
+  | null
+  | undefined
+
 export type TDynamicQueryOptions = {
   where: TDynamicCondition
+  withSelect?: TArrayColumnType
   withRelation?: TArrayRelationType
   withDeleted?: boolean
+  withGroupBy?: TArrayGroupByType
 }
 
 export type TDynamicQueryOptionsGet = TDynamicQueryOptions & {
@@ -47,6 +58,13 @@ export type TDynamicFieldValue<
 > = {
   field: K
   value: T[K]
+}
+
+export type TDynamicFieldValueWithSelect<
+  T,
+  K extends TStringKey<T> = TStringKey<T>,
+> = TDynamicFieldValue<T, K> & {
+  withSelect?: TArrayColumnType
 }
 
 export type TDynamicFieldValueWithRelation<
@@ -70,6 +88,13 @@ export type TDynamicFieldValueWithOrderBy<
   withOrderBy?: TArrayOrderByType
 }
 
+export type TDynamicFieldValueWithGroupBy<
+  T,
+  K extends TStringKey<T> = TStringKey<T>,
+> = TDynamicFieldValue<T, K> & {
+  withGroupBy?: TArrayGroupByType
+}
+
 export type TDynamicFieldValueDeleteOption<
   T,
   K extends TStringKey<T> = TStringKey<T>,
@@ -78,23 +103,42 @@ export type TDynamicFieldValueDeleteOption<
 }
 
 export default {
+  select: <T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    selections: TArrayColumnType,
+    defaultSelect?: string
+  ): SelectQueryBuilder<T> => {
+    if (selections && selections?.length) {
+      query.select(selections)
+    } else {
+      if (defaultSelect) {
+        query.select(defaultSelect)
+      }
+    }
+    return query
+  },
+
   with: <T extends ObjectLiteral>(
     query: SelectQueryBuilder<T>,
     relationNames?: TArrayRelationType,
     withDeleted?: boolean,
+    withSelection?: boolean
   ): SelectQueryBuilder<T> => {
     if (relationNames && relationNames?.length > 0) {
       for (const item of relationNames) {
         const { relation, alias } = item
 
-        query.leftJoinAndSelect(relation, alias)
+        if (withSelection) {
+          query.leftJoin(relation, alias)
+        } else {
+          query.leftJoinAndSelect(relation, alias)
+        }
 
         if (withDeleted) {
           query.addSelect(`${alias}.deletedAt`)
         }
       }
     }
-
     return query
   },
 
@@ -107,7 +151,6 @@ export default {
       query.withDeleted()
       query.addSelect(column)
     }
-
     return query
   },
 
@@ -127,6 +170,18 @@ export default {
         const fieldOrdeBy = item.orderBy
         const direction = item.direction ?? 'ASC'
         query.addOrderBy(fieldOrdeBy, direction)
+      }
+    }
+    return query
+  },
+
+  groupBy: <T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    groupBy: TArrayGroupByType
+  ): SelectQueryBuilder<T> => {
+    if (groupBy && groupBy.length > 0) {
+      for (const item of groupBy) {
+        query.addGroupBy(item)
       }
     }
     return query

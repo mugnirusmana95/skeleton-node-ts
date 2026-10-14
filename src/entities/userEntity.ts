@@ -46,7 +46,7 @@ export class User {
   @Column({ type: 'integer' })
   status!: EUserStatusEntity
 
-  statusText!: string
+  statusText?: string
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date
@@ -68,11 +68,19 @@ export class User {
 
   @AfterLoad()
   computeStatusText() {
-    this.statusText = EUserStatusEntity[this.status] || 'UNKNOWN'
+    if (typeof this.status === 'undefined') {
+      delete this.statusText
+    } else {
+      this.statusText = EUserStatusEntity[this.status] || 'UNKNOWN'
+    }
   }
 
   @AfterLoad()
   computeIsDeleted() {
-    this.isDeleted = this.deletedAt ? true : false
+    if (typeof this.deletedAt === 'undefined') {
+      delete this.isDeleted
+    } else {
+      this.isDeleted = this.deletedAt ? true : false
+    }
   }
 }

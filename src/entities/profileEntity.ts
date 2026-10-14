@@ -29,7 +29,7 @@ export class Profile {
   @Column({ type: 'varchar' })
   lastName?: string
 
-  fullName: string
+  fullName?: string
 
   @Column({ type: 'varchar' })
   phoneCode?: string
@@ -37,7 +37,7 @@ export class Profile {
   @Column({ type: 'varchar' })
   phoneNumber?: string
 
-  fullPhone: string
+  fullPhone?: string
 
   @Column({ type: 'varchar' })
   address?: string
@@ -59,24 +59,43 @@ export class Profile {
 
   @AfterLoad()
   computeFullName() {
-    this.fullName = [this.firstName, this.middleName, this.lastName]
-      .filter((name) => name?.trim())
-      .join(' ')
+    if (
+      typeof this.firstName === 'undefined' &&
+      typeof this.middleName === 'undefined' &&
+      typeof this.lastName === 'undefined'
+    ) {
+      delete this.fullName
+    } else {
+      this.fullName = [this.firstName, this.middleName, this.lastName]
+        .filter((name) => name?.trim())
+        .join(' ')
+    }
   }
 
   @AfterLoad()
   computeFullPhone() {
-    const phone = this.phoneCode && this.phoneNumber
-      ? [this.phoneCode, this.phoneNumber]
-      : []
+    if (
+      typeof this.phoneCode === 'undefined' &&
+      typeof this.phoneNumber === 'undefined'
+    ) {
+      delete this.fullPhone
+    } else {
+      const phone = this.phoneCode && this.phoneNumber
+        ? [this.phoneCode, this.phoneNumber]
+        : []
 
-    this.fullPhone = phone
-      .filter((value) => value?.trim())
-      .join('')
+      this.fullPhone = phone
+        .filter((value) => value?.trim())
+        .join('')
+    }
   }
 
   @AfterLoad()
   computeIsDeleted() {
-    this.isDeleted = this.deletedAt ? true : false
+    if (typeof this.deletedAt === 'undefined') {
+      delete this.isDeleted
+    } else {
+      this.isDeleted = this.deletedAt ? true : false
+    }
   }
 }

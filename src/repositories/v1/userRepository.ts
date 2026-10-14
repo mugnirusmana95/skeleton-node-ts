@@ -6,17 +6,18 @@ import { User } from '~/entities/userEntity'
 
 import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
-import { entityMapper } from '~/helpers/entityMapperHelper'
 
 import entity, {
   TDynamicFieldValue,
+  TDynamicFieldValueWithSelect,
   TDynamicFieldValueWithRelation,
   TDynamicFieldValueWithDeleted,
   TDynamicQueryOptions,
   TDynamicQueryDeleteOptions,
   TDynamicFieldValueDeleteOption,
   TDynamicQueryOptionsGet,
-  TDynamicFieldValueWithOrderBy
+  TDynamicFieldValueWithOrderBy,
+  TDynamicFieldValueWithGroupBy
 } from '~/helpers/entityHelper'
 
 type TCreateUser = Pick<
@@ -120,12 +121,14 @@ const find = async (
   params: TDynamicQueryOptions,
   trx?: EntityManager,
 ): Promise<User | null> => {
-  const { where, withRelation, withDeleted } = params
-  const query = repo(trx).createQueryBuilder('role')
+  const { where, withSelect, withRelation, withDeleted, withGroupBy } = params
+  const query = repo(trx).createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
-  entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)
+  entity.groupBy(query, withGroupBy)
 
   return query.getOne()
 }
@@ -134,128 +137,154 @@ const get = async (
   params: TDynamicQueryOptionsGet,
   trx?: EntityManager,
 ): Promise<User[]> => {
-  const { where, withRelation, withDeleted, withOrderBy } = params
-  const query = repo(trx).createQueryBuilder('role')
+  const { where, withRelation, withDeleted, withOrderBy, withGroupBy, withSelect } = params
+  const query = repo(trx).createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
-  entity.withDeleted(query, 'role.deletedAt', withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
+  entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   return query.getMany()
 }
 
 const findBy = async <K extends TUserField>(
-  params: TDynamicFieldValueWithRelation<User, K> &
-    TDynamicFieldValueWithDeleted<User, K>,
+  params: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K> &
+    TDynamicFieldValueWithGroupBy<User, K>,
   trx?: EntityManager,
 ): TResFindUser => {
   const {
     field,
     value,
+    withSelect,
     withRelation,
-    withDeleted
+    withDeleted,
+    withGroupBy
   } = params
 
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`user.${field} = :value`, { value })
 
   const data = await query.getOne()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const getBy = async<K extends TUserField>(
-  params: TDynamicFieldValueWithRelation<User, K> &
+  params: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
-    TDynamicFieldValueWithOrderBy<User, K>,
+    TDynamicFieldValueWithOrderBy<User, K> &
+    TDynamicFieldValueWithGroupBy<User, K>,
   trx?: EntityManager
 ): TResGetUser => {
   const {
     field,
     value,
+    withSelect,
     withRelation,
     withDeleted,
-    withOrderBy
+    withOrderBy,
+    withGroupBy
   } = params
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`user.${field} = :value`, { value })
 
   const data = await query.getMany()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const findByExceptBy = async <
   K extends TUserField,
   E extends TUserField
 >(
-  findParams: TDynamicFieldValueWithRelation<User, K> &
-    TDynamicFieldValueWithDeleted<User, K>,
+  findParams: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithRelation<User, K> &
+    TDynamicFieldValueWithDeleted<User, K> &
+    TDynamicFieldValueWithGroupBy<User, K>,
   exceptParams: TDynamicFieldValue<User, E>,
   trx?: EntityManager
 ): TResFindUser => {
   const findColumn = findParams.field
   const findValue = findParams.value
+  const withSelect = findParams.withSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
+  const withGroupBy = findParams.withGroupBy
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
 
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
+  entity.groupBy(query, withGroupBy)
 
-  const user = await query
-    .where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
-    .getOne()
+  query.where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
 
-  return entityMapper(user, { withDeleted })
+  const data = await query.getOne()
+
+  return data
 }
 
 const getByExceptBy = async <
   K extends TUserField,
   E extends TUserField
 >(
-  findParams: TDynamicFieldValueWithRelation<User, K> &
+  findParams: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
-    TDynamicFieldValueWithOrderBy<User, K>,
+    TDynamicFieldValueWithOrderBy<User, K> &
+    TDynamicFieldValueWithGroupBy<User, K>,
   exceptParams: TDynamicFieldValue<User, E>,
   trx?: EntityManager
 ): TResGetUser => {
   const findColumn = findParams.field
   const findValue = findParams.value
+  const withSelect = findParams.withSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
   const withOrderBy = findParams.withOrderBy
+  const withGroupBy = findParams.withGroupBy
   const exceptColumn = exceptParams.field
   const exceptValue = exceptParams.value
 
   const query = repo(trx)
     .createQueryBuilder('user')
 
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
+  entity.groupBy(query, withGroupBy)
 
   query.where(`user.${findColumn} = :findValue AND user.${exceptColumn} <> :exceptValue`, { findValue, exceptValue })
 
   const data = await query.getMany()
 
-  return entityMapper(data, { withDeleted })
+  return data
 }
 
 const create = async (
