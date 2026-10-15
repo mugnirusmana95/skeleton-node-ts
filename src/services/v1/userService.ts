@@ -25,7 +25,7 @@ import {
 
 
 export default {
-  getList: async (req: Request): TResGetListPaginateUser => {
+  getList: async (req: Req): TResGetListPaginateUser => {
     const params = parseParams(req)
     return await userRepository.getListPaginate(params)
   },
@@ -43,7 +43,7 @@ export default {
         withCapital: true,
         withSpecialCharacter: true
       })
-      console.log('password ', password)
+
       const hasedPassword = await generateHash(password)
 
       const dataUser = await userRepository.create({
@@ -157,7 +157,7 @@ export default {
         withCapital: true,
         withSpecialCharacter: true
       })
-      console.log('password ', password)
+
       const hasedPassword = await generateHash(password)
 
       await userRepository.updateBy({

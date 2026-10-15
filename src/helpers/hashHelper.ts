@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 import { randomInt } from 'node:crypto'
+import { InternalServer } from '~/exceptions'
 
 type TOptionGenerateRandomText = {
   length?: number
@@ -8,34 +9,42 @@ type TOptionGenerateRandomText = {
   withSpecialCharacter?: boolean
 }
 
-export const generateRandomText = (options?: TOptionGenerateRandomText): string => {
+export const generateRandomText = (
+  options?: TOptionGenerateRandomText,
+): string => {
   const length = options?.length ?? 5
   const withCapital = options?.withCapital ?? false
   const withNumber = options?.withNumber ?? true
   const withSpecialCharacter = options?.withSpecialCharacter ?? false
 
-  const CHAR = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
+  const CHAR = 'abcdefghijklmnopqrstuvwxyz'
   const CHAR_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const NUMBER = '0123456789'
   const SPECIAL_CHAR = '!@#$%^&*'
 
   let characters = CHAR
 
-  if (withCapital) {
-    characters += CHAR_UPPER
+  if (withCapital) characters += CHAR_UPPER
+  if (withNumber) characters += NUMBER
+  if (withSpecialCharacter) characters += SPECIAL_CHAR
+
+  if (length < 1) {
+    throw new InternalServer('Length must be at least 1')
   }
+
+  if (withNumber && length < 1) {
+    throw new InternalServer('Length must be at least 1 to include a number')
+  }
+
+  const result = Array.from({ length }, () =>
+    characters[randomInt(characters.length)],
+  )
 
   if (withNumber) {
-    characters += NUMBER
+    result[randomInt(length)] = NUMBER[randomInt(NUMBER.length)]
   }
 
-  if (withSpecialCharacter) {
-    characters += SPECIAL_CHAR
-  }
-
-  return Array.from({ length }, () =>
-    characters[randomInt(length)],
-  ).join('')
+  return result.join('')
 }
 
 export const generateHash = async (value: string): Promise<string> => {

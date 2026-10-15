@@ -1,5 +1,3 @@
-import { Response } from 'express'
-
 type TResponseParams<T = unknown> = {
   status: number
   message?: string
@@ -27,7 +25,7 @@ const defaultMessage: Record<number, string> = {
 }
 
 export const response = <T = unknown>(
-  res: Response,
+  res: Res,
   params: TResponseParams<T>
 ) => {
   const { status, message, data, field } = params

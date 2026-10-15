@@ -1,6 +1,3 @@
-import { Request } from 'express'
-
-
 export type TParamsPage = number | undefined
 
 export const ALLOWED_LIMITS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const
@@ -87,7 +84,7 @@ const parseOrderBy = (value: unknown): TOrderByItem[] => {
     .filter((item) => item.column.length > 0)
 }
 
-export const parseParams = (req: Request): TParsedParams => {
+export const parseParams = (req: Req): TParsedParams => {
   const q = req.query
 
   const page = toNumber(q.page)

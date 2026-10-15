@@ -1,11 +1,13 @@
 export class AppError extends Error {
   public readonly status: number
   public readonly isOperational: boolean
+  public readonly field?: Record<string, unknown>
 
-  constructor(message: string, status: number, isOperational = true) {
+  constructor(message: string, status: number, isOperational = true, fieldError?: Record<string, unknown>) {
     super(message)
     this.status = status
     this.isOperational = isOperational
+    this.field = fieldError
     Object.setPrototypeOf(this, new.target.prototype)
     Error.captureStackTrace(this)
   }
@@ -20,6 +22,15 @@ export class BadRequest extends AppError {
 export class Unauthorized extends AppError {
   constructor(message: string = 'Unauthorized') {
     super(message, 401)
+  }
+}
+
+export class UnprocessableEntity extends AppError {
+  constructor(
+    message: string = 'Unprocessable Entity',
+    field?: Record<string, unknown>,
+  ) {
+    super(message, 422, true, field)
   }
 }
 

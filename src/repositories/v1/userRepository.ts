@@ -4,6 +4,8 @@ import { AppDataSource } from '~/configs/dataSource'
 
 import { User } from '~/entities/userEntity'
 
+import { InternalServer } from '~/exceptions'
+
 import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
 
@@ -17,7 +19,8 @@ import entity, {
   TDynamicFieldValueDeleteOption,
   TDynamicQueryOptionsGet,
   TDynamicFieldValueWithOrderBy,
-  TDynamicFieldValueWithGroupBy
+  TDynamicFieldValueWithGroupBy,
+  TDynamicFieldValueWithAddSelect
 } from '~/helpers/entityHelper'
 
 type TCreateUser = Pick<
@@ -59,25 +62,18 @@ const getListPaginate = async (
     fullRelation
   } = params
 
-  const query = repo(trx)
-    .createQueryBuilder('user')
+  const query = repo(trx).createQueryBuilder('user')
 
-  if (fullRelation) {
-    query.leftJoinAndSelect('user.role', 'role')
-      .leftJoinAndSelect('user.profile', 'profile')
-
-  }
+  query
+    .leftJoinAndSelect('user.role', 'role')
+    .leftJoinAndSelect('user.profile', 'profile')
 
   if (statusDelete === EStatusDelete.WITH || statusDelete === EStatusDelete.ONLY) {
     query
       .withDeleted()
       .addSelect('user.deletedAt')
-
-    if (fullRelation) {
-      query
-        .addSelect('role.deletedAt')
-        .addSelect('profile.deletedAt')
-    }
+      .addSelect('role.deletedAt')
+      .addSelect('profile.deletedAt')
   }
 
   if (statusDelete === EStatusDelete.ONLY) {
@@ -85,11 +81,19 @@ const getListPaginate = async (
   }
 
   if (search) {
-    query.andWhere(`user.email ILIKE :search`, { search })
+    query.andWhere(`(
+        user.email ILIKE :search OR
+        profile.firstName ILIKE :search OR
+        profile.middleName ILIKE :search OR
+        profile.lastName ILIKE :search OR
+        profile.phoneCode ILIKE :search OR
+        profile.phoneNumber ILIKE :search
+      )`,
+      { search: `%${search}%` })
   }
 
   if (roleId) {
-    query.andWhere(`role.id = :roleId`, { roleId })
+    query.andWhere(`user.roleId = :roleId`, { roleId })
   }
 
   if (orderBy && orderBy.length > 0) {
@@ -121,10 +125,11 @@ const find = async (
   params: TDynamicQueryOptions,
   trx?: EntityManager,
 ): Promise<User | null> => {
-  const { where, withSelect, withRelation, withDeleted, withGroupBy } = params
+  const { where, withSelect, withAddSelect, withRelation, withDeleted, withGroupBy } = params
   const query = repo(trx).createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)
@@ -137,10 +142,11 @@ const get = async (
   params: TDynamicQueryOptionsGet,
   trx?: EntityManager,
 ): Promise<User[]> => {
-  const { where, withRelation, withDeleted, withOrderBy, withGroupBy, withSelect } = params
+  const { where, withRelation, withDeleted, withOrderBy, withGroupBy, withSelect, withAddSelect } = params
   const query = repo(trx).createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)
@@ -152,6 +158,7 @@ const get = async (
 
 const findBy = async <K extends TUserField>(
   params: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithAddSelect<User, K> &
     TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
     TDynamicFieldValueWithGroupBy<User, K>,
@@ -161,6 +168,7 @@ const findBy = async <K extends TUserField>(
     field,
     value,
     withSelect,
+    withAddSelect,
     withRelation,
     withDeleted,
     withGroupBy
@@ -170,6 +178,7 @@ const findBy = async <K extends TUserField>(
     .createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.groupBy(query, withGroupBy)
@@ -183,6 +192,7 @@ const findBy = async <K extends TUserField>(
 
 const getBy = async<K extends TUserField>(
   params: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithAddSelect<User, K> &
     TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
     TDynamicFieldValueWithOrderBy<User, K> &
@@ -193,6 +203,7 @@ const getBy = async<K extends TUserField>(
     field,
     value,
     withSelect,
+    withAddSelect,
     withRelation,
     withDeleted,
     withOrderBy,
@@ -202,6 +213,7 @@ const getBy = async<K extends TUserField>(
     .createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
@@ -219,6 +231,7 @@ const findByExceptBy = async <
   E extends TUserField
 >(
   findParams: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithAddSelect<User, K> &
     TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
     TDynamicFieldValueWithGroupBy<User, K>,
@@ -228,6 +241,7 @@ const findByExceptBy = async <
   const findColumn = findParams.field
   const findValue = findParams.value
   const withSelect = findParams.withSelect
+  const withAddSelect = findParams.withAddSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
   const withGroupBy = findParams.withGroupBy
@@ -238,6 +252,7 @@ const findByExceptBy = async <
     .createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.groupBy(query, withGroupBy)
@@ -254,6 +269,7 @@ const getByExceptBy = async <
   E extends TUserField
 >(
   findParams: TDynamicFieldValueWithSelect<User, K> &
+    TDynamicFieldValueWithAddSelect<User, K> &
     TDynamicFieldValueWithRelation<User, K> &
     TDynamicFieldValueWithDeleted<User, K> &
     TDynamicFieldValueWithOrderBy<User, K> &
@@ -264,6 +280,7 @@ const getByExceptBy = async <
   const findColumn = findParams.field
   const findValue = findParams.value
   const withSelect = findParams.withSelect
+  const withAddSelect = findParams.withAddSelect
   const withRelation = findParams.withRelation
   const withDeleted = findParams.withDeleted
   const withOrderBy = findParams.withOrderBy
@@ -275,6 +292,7 @@ const getByExceptBy = async <
     .createQueryBuilder('user')
 
   entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.orderBy(query, withOrderBy)
@@ -292,7 +310,7 @@ const create = async (
   trx?: EntityManager
 ): TResCreateUser => {
   if (Object.keys(data).length === 0) {
-    throw new Error('Data cannot be empty')
+    throw new InternalServer('Data cannot be empty')
   }
 
   return repo(trx).save(data)
@@ -304,15 +322,15 @@ const update = async (
   trx?: EntityManager,
 ): Promise<UpdateResult> => {
   if (Object.keys(data).length === 0) {
-    throw new Error('Data cannot be empty')
+    throw new InternalServer('Data cannot be empty')
   }
+  const { where, withSelect, withAddSelect, withRelation, withDeleted } = params
 
   const query = repo(trx).createQueryBuilder('user')
-    .select('user.id')
 
-  const { where, withRelation, withDeleted } = params
-
-  entity.with(query, withRelation, withDeleted)
+  entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
+  entity.with(query, withRelation, withDeleted, !!withSelect)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)
 
@@ -335,7 +353,7 @@ const updateBy = async <
   trx?: EntityManager,
 ): TResUpdateUser => {
   if (Object.keys(data).length === 0) {
-    throw new Error('Data cannot be empty')
+    throw new InternalServer('Data cannot be empty')
   }
 
   const { field, value } = params
@@ -349,10 +367,12 @@ const deleted = async (
   params: TDynamicQueryDeleteOptions,
   trx?: EntityManager,
 ): Promise<TResSoftDeleteUser | TResDeleteUser> => {
+  const { where, withSelect, withAddSelect, withRelation, withDeleted, permanentDelete } = params
+
   const query = repo(trx).createQueryBuilder('user')
 
-  const { where, withRelation, withDeleted, permanentDelete } = params
-
+  entity.select(query, withSelect)
+  entity.addSelect(query, withAddSelect)
   entity.with(query, withRelation, withDeleted)
   entity.withDeleted(query, 'user.deletedAt', withDeleted)
   entity.condition(query, where)

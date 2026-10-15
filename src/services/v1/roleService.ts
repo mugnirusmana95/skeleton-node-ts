@@ -19,7 +19,7 @@ import {
 } from "~/validations/v1/roleValidation"
 
 export default {
-  getList: async (req: Request): TResGetListPaginateRole => {
+  getList: async (req: Req): TResGetListPaginateRole => {
     const params = parseParams(req)
     return await roleRepository.getListPaginate(params)
   },

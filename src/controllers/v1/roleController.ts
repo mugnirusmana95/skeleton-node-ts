@@ -1,11 +1,9 @@
-import { Request, Response } from 'express'
-
 import { response } from '~/helpers/responseHelper'
 
 import roleService from '~/services/v1/roleService'
 
 export default {
-  getList: async (req: Request, res: Response) => {
+  getList: async (req: Req, res: Res) => {
     const data = await roleService.getList(req)
 
     return response(res, {
@@ -15,7 +13,7 @@ export default {
     })
   },
 
-  create: async (req: Request, res: Response) => {
+  create: async (req: Req, res: Res) => {
     const payload = req.body
 
     const data = await roleService.create(payload)
@@ -27,7 +25,7 @@ export default {
     })
   },
 
-  getDetail: async (req: Request, res: Response) => {
+  getDetail: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
 
     const data = await roleService.getDetail(id)
@@ -39,7 +37,7 @@ export default {
     })
   },
 
-  update: async (req: Request, res: Response) => {
+  update: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const payload = req.body
 
@@ -52,7 +50,7 @@ export default {
     })
   },
 
-  activation: async (req: Request, res: Response) => {
+  activation: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const payload = req.body
 
@@ -65,7 +63,7 @@ export default {
     })
   },
 
-  delete: async (req: Request, res: Response) => {
+  delete: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
 
     const data = await roleService.delete(id)
@@ -77,7 +75,7 @@ export default {
     })
   },
 
-  permanentDelete: async (req: Request, res: Response) => {
+  permanentDelete: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
 
     const data = await roleService.permanentDelete(id)

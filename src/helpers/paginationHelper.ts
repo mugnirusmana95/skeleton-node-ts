@@ -13,7 +13,7 @@ export type TPaginationResponse<T> = {
   pagination: {
     page: number
     limit: number
-    total: number
+    totalData: number
     totalPage: number
     hasPrevPage: boolean
     hasNextPage: boolean
@@ -25,14 +25,14 @@ export type TResGetListPaginate<T> = Promise<TPaginationResponse<T>>
 export const paginate = async <T extends ObjectLiteral>(
   query: SelectQueryBuilder<T>,
   params: TPaginationParams,
-): Promise<TPaginationResponse<T>> => {
+): TResGetListPaginate<T> => {
   const { page, limit, statusDelete } = params
 
   const skip = (page - 1) * limit
 
   query.skip(skip).take(limit)
 
-  const [data, total] = await query.getManyAndCount()
+  const [data, totalData] = await query.getManyAndCount()
 
   let withDeleted = true
 
@@ -40,14 +40,14 @@ export const paginate = async <T extends ObjectLiteral>(
     withDeleted = false
   }
 
-  const totalPage = Math.max(1, Math.ceil(total / limit))
+  const totalPage = Math.max(1, Math.ceil(totalData / limit))
 
   return {
     list: data,
     pagination: {
       page,
       limit,
-      total,
+      totalData,
       totalPage,
       hasPrevPage: page > 1,
       hasNextPage: page < totalPage,

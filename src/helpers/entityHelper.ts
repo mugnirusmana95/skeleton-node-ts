@@ -31,14 +31,21 @@ type TArrayGroupByType =
   | [string, ...string[]]
   | null
   | undefined
-type TArrayColumnType =
+
+type TArraySelectType =
+  | [string, ...string[]]
+  | null
+  | undefined
+
+type TArrayAddSelectType =
   | [string, ...string[]]
   | null
   | undefined
 
 export type TDynamicQueryOptions = {
   where: TDynamicCondition
-  withSelect?: TArrayColumnType
+  withSelect?: TArraySelectType
+  withAddSelect?: TArrayAddSelectType
   withRelation?: TArrayRelationType
   withDeleted?: boolean
   withGroupBy?: TArrayGroupByType
@@ -64,7 +71,14 @@ export type TDynamicFieldValueWithSelect<
   T,
   K extends TStringKey<T> = TStringKey<T>,
 > = TDynamicFieldValue<T, K> & {
-  withSelect?: TArrayColumnType
+  withSelect?: TArraySelectType
+}
+
+export type TDynamicFieldValueWithAddSelect<
+  T,
+  K extends TStringKey<T> = TStringKey<T>,
+> = TDynamicFieldValue<T, K> & {
+  withAddSelect?: TArrayAddSelectType
 }
 
 export type TDynamicFieldValueWithRelation<
@@ -105,14 +119,26 @@ export type TDynamicFieldValueDeleteOption<
 export default {
   select: <T extends ObjectLiteral>(
     query: SelectQueryBuilder<T>,
-    selections: TArrayColumnType,
+    selections: TArraySelectType,
     defaultSelect?: string
   ): SelectQueryBuilder<T> => {
-    if (selections && selections?.length) {
+    if (selections && selections?.length > 0) {
       query.select(selections)
     } else {
       if (defaultSelect) {
         query.select(defaultSelect)
+      }
+    }
+    return query
+  },
+
+  addSelect: <T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    addselections: TArrayAddSelectType,
+  ): SelectQueryBuilder<T> => {
+    if (addselections && addselections?.length > 0) {
+      for (const item of addselections) {
+        query.addSelect(item)
       }
     }
     return query

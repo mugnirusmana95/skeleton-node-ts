@@ -16,18 +16,24 @@ export type TChangeStatusUserBody = z.infer<typeof changeStatusUserSchema>
 
 const listUserSchema = z.object({
   page: z.coerce
-    .number({ message: 'Page must be a number' })
+    .number('Page must be an integer')
     .int('Page must be an integer')
-    .min(1, 'Page minimum 1'),
-
-  limit: z.coerce
-    .number({ message: 'Limit must be a number' })
-    .int('Limit delete must be an integer'),
-
-  search: z.string().optional()
+    .min(1, 'Page minimum 1')
+    .optional()
     .or(z.literal('')),
 
-  roleId: z.string().optional()
+  limit: z.coerce
+    .number('Limit must be an integer')
+    .int('Limit delete must be an integer')
+    .optional()
+    .or(z.literal('')),
+
+  search: z.string()
+    .optional()
+    .or(z.literal('')),
+
+  roleId: z.uuid('Role id must be an uuid')
+    .optional()
     .or(z.literal('')),
 
   orderBy: z
@@ -46,9 +52,23 @@ const listUserSchema = z.object({
     .optional()
     .or(z.literal('')),
 }).superRefine(async (data, ctx) => {
-  const { limit } = data
+  const { page, limit } = data
 
-  if (!ALLOWED_LIMITS.includes(limit as (typeof ALLOWED_LIMITS)[number])) {
+  if (!page || String(page) === "") {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['page'],
+      message: `Page is required`,
+    })
+  }
+
+  if (!limit || String(limit) === "") {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['limit'],
+      message: `Limit is required`,
+    })
+  } else if (!ALLOWED_LIMITS.includes(limit as (typeof ALLOWED_LIMITS)[number])) {
     ctx.addIssue({
       code: 'custom',
       path: ['limit'],

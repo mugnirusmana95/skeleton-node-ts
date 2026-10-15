@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from 'express'
 import { ZodType } from 'zod'
 
-import { response } from '~/helpers/responseHelper'
+import { UnprocessableEntity } from '~/exceptions'
 
 type TValidationTarget = 'body' | 'query' | 'params' | 'req'
 
@@ -10,13 +9,20 @@ const formatZodError = (issues: { path: PropertyKey[], message: string }[]) => {
     issues.map((issue) => [
       issue.path.map(String).join('.'),
       issue.message,
-    ])
+    ]),
   )
 
-  const array = issues.map((issue) => ({
-    field: issue.path.map(String).join('.'),
-    message: issue.message,
-  }))
+  const array = Array.from(
+    new Map(
+      issues.map((issue) => [
+        issue.path.map(String).join('.'),
+        {
+          field: issue.path.map(String).join('.'),
+          message: issue.message,
+        },
+      ]),
+    ).values(),
+  )
 
   return { object, array }
 }
@@ -25,7 +31,7 @@ export const validate = (
   schema: ZodType,
   target: TValidationTarget = 'body',
 ) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Req, res: Res, next: Next) => {
     const dataToValidate = target === 'req'
       ? { params: req.params, body: req.body, query: req.query }
       : req[target]
@@ -35,11 +41,7 @@ export const validate = (
     if (!result.success) {
       const validationResult = formatZodError(result.error.issues)
 
-      return response(res, {
-        status: 422,
-        message: 'Validation Error',
-        field: validationResult,
-      })
+      throw new UnprocessableEntity('', validationResult)
     }
 
     return next()

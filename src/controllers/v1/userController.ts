@@ -1,11 +1,9 @@
-import { Request, Response } from 'express'
-
 import { response } from '~/helpers/responseHelper'
 
 import userService from '~/services/v1/userService'
 
 export default {
-  getList: async (req: Request, res: Response) => {
+  getList: async (req: Req, res: Res) => {
     const data = await userService.getList(req)
 
     return response(res, {
@@ -15,7 +13,7 @@ export default {
     })
   },
 
-  create: async (req: Request, res: Response) => {
+  create: async (req: Req, res: Res) => {
     const data = await userService.create(req.body)
 
     return response(res, {
@@ -25,7 +23,7 @@ export default {
     })
   },
 
-  getDetail: async (req: Request, res: Response) => {
+  getDetail: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const data = await userService.getDetail(id)
 
@@ -36,7 +34,7 @@ export default {
     })
   },
 
-  getByStatus: async (req: Request, res: Response) => {
+  getByStatus: async (req: Req, res: Res) => {
     const data = await userService.getByStatus(1)
 
     return response(res, {
@@ -46,7 +44,7 @@ export default {
     })
   },
 
-  update: async (req: Request, res: Response) => {
+  update: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const paylaod = req.body
     const data = await userService.update(id, paylaod)
@@ -58,7 +56,7 @@ export default {
     })
   },
 
-  changeStatus: async (req: Request, res: Response) => {
+  changeStatus: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const paylaod = req.body
     const data = await userService.changeStatus(id, paylaod)
@@ -70,7 +68,7 @@ export default {
     })
   },
 
-  resetPassword: async (req: Request, res: Response) => {
+  resetPassword: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const data = await userService.resetPassword(id)
 
@@ -81,7 +79,7 @@ export default {
     })
   },
 
-  delete: async (req: Request, res: Response) => {
+  delete: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const data = await userService.delete(id)
 
@@ -92,7 +90,7 @@ export default {
     })
   },
 
-  permanentDelete: async (req: Request, res: Response) => {
+  permanentDelete: async (req: Req, res: Res) => {
     const id = String(req.params?.id)
     const data = await userService.permanentDelete(id)
 

@@ -8,11 +8,13 @@ import {
   ManyToOne,
   JoinColumn,
   AfterLoad,
-  OneToOne
+  OneToOne,
+  OneToMany
 } from 'typeorm'
 
 import { Role } from '~/entities/roleEntity'
 import { Profile } from '~/entities/profileEntity'
+import { UserToken } from '~/entities/userTokenEntity'
 
 export enum EUserStatusEntity {
   INACTIVE = 1, // User inactive (first register)
@@ -32,7 +34,7 @@ export const allowedTextUserStatusEntity = Object.keys(EUserStatusEntity)
 @Entity({ schema: 'public', name: 'users' })
 export class User {
   @PrimaryGeneratedColumn("uuid")
-  id: string
+  id!: string
 
   @Column({ type: 'varchar' })
   email!: string
@@ -65,6 +67,9 @@ export class User {
 
   @OneToOne(() => Profile, (profile) => profile.user)
   profile: Profile
+
+  @OneToMany(() => UserToken, (userToken) => userToken.user)
+  userTokens: UserToken[]
 
   @AfterLoad()
   computeStatusText() {
