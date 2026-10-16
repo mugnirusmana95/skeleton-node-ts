@@ -10,11 +10,12 @@ import {
 } from 'typeorm'
 
 import { User } from '~/entities/userEntity'
+import { RolePermission } from './rolePermissionEntity'
 
 @Entity({ schema: 'public', name: 'roles' })
 export class Role {
   @PrimaryGeneratedColumn("uuid")
-  id: string
+  id!: string
 
   @Column({ type: 'varchar' })
   code!: string
@@ -36,8 +37,17 @@ export class Role {
 
   isDeleted?: boolean
 
-  @OneToMany(() => User, (model) => model.role)
+  @OneToMany(
+    () => User,
+    (model) => model.role
+  )
   users!: User[]
+
+  @OneToMany(
+    () => RolePermission,
+    (model) => model.role
+  )
+  rolePermissions!: RolePermission[]
 
   @AfterLoad()
   computeIsDeleted() {

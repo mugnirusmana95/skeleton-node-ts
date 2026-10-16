@@ -1,5 +1,5 @@
 
-import { BadRequest } from '~/exceptions'
+import { BadRequest } from '~/helpers/exceptionHelper'
 
 export const unAuthMiddleware = async (
   req: Req,

@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-import { BadRequest, Unauthorized } from '~/exceptions'
+import { BadRequest, Unauthorized } from '~/helpers/exceptionHelper'
 
 import encryption from '~/helpers/encryptionHelper'
 

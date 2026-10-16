@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import { randomInt } from 'node:crypto'
-import { InternalServer } from '~/exceptions'
+import { InternalServer } from '~/helpers/exceptionHelper'
 
 type TOptionGenerateRandomText = {
   length?: number

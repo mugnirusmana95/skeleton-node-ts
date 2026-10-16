@@ -1,6 +1,6 @@
 import { ZodType } from 'zod'
 
-import { UnprocessableEntity } from '~/exceptions'
+import { UnprocessableEntity } from '~/helpers/exceptionHelper'
 
 type TValidationTarget = 'body' | 'query' | 'params' | 'req'
 

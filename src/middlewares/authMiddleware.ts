@@ -1,8 +1,7 @@
 import moment from 'moment'
 
-import { Unauthorized } from '~/exceptions'
+import { Unauthorized } from '~/helpers/exceptionHelper'
 
-import { response } from '~/helpers/responseHelper'
 import encryption from '~/helpers/encryptionHelper'
 
 import userTokenRepository from '~/repositories/v1/userTokenRepository'

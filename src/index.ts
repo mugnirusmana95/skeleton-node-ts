@@ -6,9 +6,10 @@ import cookieParser from 'cookie-parser'
 import { AppDataSource } from '~/configs/dataSource'
 
 import { errorMiddleware } from '~/middlewares/errorMiddleware'
+import { languageMiddleware } from './middlewares/languageMiddleware'
+import { timezoneMiddleware } from './middlewares/timezoneMiddleware'
 
 import routesV1 from '~/routes/v1'
-import { timezoneMiddleware } from './middlewares/timezoneMiddleware'
 
 dotenv.config()
 
@@ -23,9 +24,9 @@ const MODE_ALLOWED = [
 ]
 
 app.use(express.json())
-
 app.use(cookieParser())
 
+app.use(languageMiddleware)
 app.use(timezoneMiddleware)
 
 app.use('/api/v1', routesV1)

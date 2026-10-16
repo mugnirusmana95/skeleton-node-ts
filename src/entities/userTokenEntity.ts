@@ -24,7 +24,7 @@ export class UserToken {
   id!: string
 
   @Column({ type: 'varchar' })
-  userId: string
+  userId!: string
 
   @Column({ type: 'integer' })
   type!: EUserTokenTypeEntity
@@ -51,7 +51,10 @@ export class UserToken {
 
   isDeleted?: boolean
 
-  @ManyToOne(() => User)
+  @ManyToOne(
+    () => User,
+    (model) => model.userTokens
+  )
   @JoinColumn({ name: 'userId' })
   user!: User
 

@@ -20,9 +20,13 @@ export class CreateUserTokenTable1791961056127 implements MigrationInterface {
                 "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "deletedAt" TIMESTAMP WITH TIME ZONE NULL,
 
-                CONSTRAINT "PK_${this.tableName}_id" PRIMARY KEY ("id"),
-                CONSTRAINT "FK_${this.tableName}_users_userId" FOREIGN KEY ("userId") 
-                    REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE
+                CONSTRAINT "PK_${this.tableName}_id"
+                    PRIMARY KEY ("id"),
+                CONSTRAINT "FK_${this.tableName}_users_userId"
+                    FOREIGN KEY ("userId") 
+                    REFERENCES "public"."users"("id")
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE
             )`)
     }
 

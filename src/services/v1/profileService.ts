@@ -1,6 +1,6 @@
 import { AppDataSource } from "~/configs/dataSource"
 
-import { NotFound } from "~/exceptions"
+import { NotFound } from "~/helpers/exceptionHelper"
 
 import userRepository, {
   TResFindUser,

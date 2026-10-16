@@ -14,40 +14,40 @@ const updateProfileSchema = z.object({
   userId: z.uuidv4('Id must be a valid UUID'),
 
   firstName: z
-    .string({ message: 'First name is required' })
+    .string('First name is required')
     .min(2, 'First name is required')
     .max(100, 'First name maximum 50 characters'),
 
   middleName: z
-    .string({ message: 'First name is required' })
+    .string('First name is required')
     .min(2, 'First name is required')
     .max(100, 'First name maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   lastName: z
-    .string({ message: 'Middle name is required' })
+    .string('Middle name is required')
     .min(2, 'Middle name is required')
     .max(100, 'Middle name maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   phoneCode: z
-    .string({ message: 'Phone code is required' })
+    .string('Phone code is required')
     .min(2, 'Phone code is required')
     .max(100, 'Phone code maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   phoneNumber: z
-    .string({ message: 'Phone number is required' })
+    .string('Phone number is required')
     .min(2, 'Phone number is required')
     .max(100, 'Phone number maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   address: z
-    .string({ message: 'Address is required' })
+    .string('Address is required')
     .min(2, 'Address is required')
     .max(255, 'Address maximum 50 characters')
     .optional()

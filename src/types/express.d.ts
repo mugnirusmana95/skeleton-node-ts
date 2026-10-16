@@ -1,5 +1,6 @@
 
 import type { Request, Response, NextFunction } from 'express'
+import { TLanguageMiddleware } from '~/middlewares/languageMiddleware'
 
 declare global {
   namespace Express {
@@ -11,6 +12,7 @@ declare global {
         expiredAt: Date
       },
       timezone: string
+      language: TLanguageMiddleware
     }
   }
 

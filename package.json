@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typeorm": "tsx ./node_modules/typeorm/cli.js -d src/configs/dataSource.ts",
+    "migration:create": "typeorm migration:create",
     "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d src/configs/dataSource.ts",
     "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/configs/dataSource.ts",
     "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/configs/dataSource.ts"

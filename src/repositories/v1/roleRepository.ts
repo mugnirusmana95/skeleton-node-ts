@@ -4,7 +4,7 @@ import { AppDataSource } from '~/configs/dataSource'
 
 import { Role } from '~/entities/roleEntity'
 
-import { InternalServer } from '~/exceptions'
+import { InternalServer } from '~/helpers/exceptionHelper'
 
 import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
@@ -38,7 +38,7 @@ export type TResGetRole = Promise<Role[]>
 export type TResCreateRole = Promise<Role>
 export type TResUpdateRole = Promise<UpdateResult>
 export type TResSoftDeleteRole = TResUpdateRole
-export type TResDeleteRole = Promise<DeleteResult>
+export type TResDeleteRole = DeleteResult
 
 const repo = (manager?: EntityManager) =>
   (manager ?? AppDataSource).getRepository(Role)
@@ -52,28 +52,16 @@ const getListPaginate = async (
     limit = 10,
     search = '',
     orderBy = [],
-    statusDelete,
-    fullRelation
+    statusDelete
   } = params
 
   const query = repo(trx)
     .createQueryBuilder('role')
 
-  if (fullRelation) {
-    query.leftJoinAndSelect('role.users', 'users')
-    query.leftJoinAndSelect('users.profile', 'profile')
-  }
-
   if (statusDelete === EStatusDelete.WITH || statusDelete === EStatusDelete.ONLY) {
     query
       .withDeleted()
       .addSelect('role.deletedAt')
-
-    if (fullRelation) {
-      query
-        .addSelect('users.deletedAt')
-        .addSelect('profile.deletedAt')
-    }
   }
 
   if (statusDelete === EStatusDelete.ONLY) {
@@ -287,6 +275,20 @@ const create = async (
   return repo(trx).save(data)
 }
 
+const createMany = async (
+  data: TCreateRole[],
+  trx?: EntityManager
+): Promise<Role[]> => {
+  if (
+    data.length === 0 ||
+    data.some((item) => Object.keys(item).length === 0)
+  ) {
+    throw new InternalServer('Data cannot be empty')
+  }
+
+  return repo(trx).save(data)
+}
+
 const update = async (
   params: TDynamicQueryOptions,
   data: TUpdateRole,
@@ -387,6 +389,7 @@ export default {
   findByExceptBy,
   getByExceptBy,
   create,
+  createMany,
   update,
   updateBy,
   deleted,

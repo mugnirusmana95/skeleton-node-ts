@@ -4,7 +4,7 @@ import { AppDataSource } from "~/configs/dataSource"
 
 import { EUserStatusEntity } from '~/entities/userEntity'
 
-import { NotFound } from "~/exceptions"
+import { NotFound } from "~/helpers/exceptionHelper"
 import { generateHash, generateRandomText } from "~/helpers/hashHelper"
 
 import { parseParams } from "~/helpers/paramHelper"

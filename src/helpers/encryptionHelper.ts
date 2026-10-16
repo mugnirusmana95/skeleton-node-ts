@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto'
-import { InternalServer } from '~/exceptions'
+import { InternalServer } from '~/helpers/exceptionHelper'
 
 type TEncodedPayload = {
   salt: string

@@ -4,7 +4,7 @@ import { AppDataSource } from '~/configs/dataSource'
 
 import { UserToken } from '~/entities/userTokenEntity'
 
-import { InternalServer } from '~/exceptions'
+import { InternalServer } from '~/helpers/exceptionHelper'
 
 import { TParsedParams, EStatusDelete } from '~/helpers/paramHelper'
 import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
@@ -310,6 +310,20 @@ const create = async (
   return repo(trx).save(data)
 }
 
+const createMany = async (
+  data: TCreateUserToken[],
+  trx?: EntityManager
+): Promise<UserToken[]> => {
+  if (
+    data.length === 0 ||
+    data.some((item) => Object.keys(item).length === 0)
+  ) {
+    throw new InternalServer('Data cannot be empty')
+  }
+
+  return repo(trx).save(data)
+}
+
 const update = async (
   params: TDynamicQueryOptions,
   data: TUpdateUserToken,
@@ -411,6 +425,7 @@ export default {
   findByExceptBy,
   getByExceptBy,
   create,
+  createMany,
   update,
   updateBy,
   deleted,

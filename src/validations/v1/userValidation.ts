@@ -79,12 +79,12 @@ const listUserSchema = z.object({
 
 const createUserSchema = z.object({
   email: z
-    .string({ message: 'Email is required' })
+    .string('Email is required')
     .min(1, 'Email is required')
     .max(50, 'Email maximum 50 characters'),
 
   roleId: z
-    .string({ message: 'Role is required' })
+    .string('Role is required')
     .min(1, 'Role is required'),
 
   status: z
@@ -94,40 +94,40 @@ const createUserSchema = z.object({
     .optional(),
 
   firstName: z
-    .string({ message: 'First name is required' })
+    .string('First name is required')
     .min(2, 'First name minimum 2 characters')
     .max(100, 'First name maximum 50 characters'),
 
   middleName: z
-    .string({ message: 'Middle name is required' })
+    .string('Middle name is required')
     .min(2, 'Middle name minimum 2 characters')
     .max(100, 'Middle name maximum 100 characters')
     .optional()
     .or(z.literal('')),
 
   lastName: z
-    .string({ message: 'Last name is required' })
+    .string('Last name is required')
     .min(2, 'Last name minimum 2 characters')
     .max(100, 'Last name maximum 100 characters')
     .optional()
     .or(z.literal('')),
 
   phoneCode: z
-    .string({ message: 'Phone code is required' })
+    .string('Phone code is required')
     .min(2, 'Phone code minimum 2 characters')
     .max(100, 'Phone code maximum 100 characters')
     .optional()
     .or(z.literal('')),
 
   phoneNumber: z
-    .string({ message: 'Phone number is required' })
+    .string('Phone number is required')
     .min(2, 'Phone number minimum 2 characters')
     .max(100, 'Phone number maximum 100 characters')
     .optional()
     .or(z.literal('')),
 
   address: z
-    .string({ message: 'Address is required' })
+    .string('Address is required')
     .min(2, 'Address minimum 2 characters')
     .max(255, 'Address maximum 255 characters')
     .optional()
@@ -206,7 +206,7 @@ const updateUserSchema = z.object({
   id: z.uuidv4('Id must be a valid UUID'),
 
   email: z
-    .string({ message: 'Email is required' })
+    .string('Email is required')
     .min(1, 'Email is required')
     .max(50, 'Email maximum 50 characters')
     .optional()
@@ -219,40 +219,40 @@ const updateUserSchema = z.object({
     .or(z.literal('')),
 
   firstName: z
-    .string({ message: 'First name is required' })
+    .string('First name is required')
     .min(2, 'First name is required')
     .max(100, 'First name maximum 50 characters'),
 
   middleName: z
-    .string({ message: 'Middle name is required' })
+    .string('Middle name is required')
     .min(2, 'Middle name is required')
     .max(100, 'Middle name maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   lastName: z
-    .string({ message: 'Last name is required' })
+    .string('Last name is required')
     .min(2, 'Last name is required')
     .max(100, 'Last name maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   phoneCode: z
-    .string({ message: 'Phone code is required' })
+    .string('Phone code is required')
     .min(2, 'Phone code is required')
     .max(100, 'Phone code maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   phoneNumber: z
-    .string({ message: 'Phone number is required' })
+    .string('Phone number is required')
     .min(2, 'Phone number is required')
     .max(100, 'Phone number maximum 50 characters')
     .optional()
     .or(z.literal('')),
 
   address: z
-    .string({ message: 'Address is required' })
+    .string('Address is required')
     .min(2, 'Address is required')
     .max(255, 'Address maximum 50 characters')
     .optional()

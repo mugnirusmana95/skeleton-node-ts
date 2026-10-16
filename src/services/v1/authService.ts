@@ -3,7 +3,7 @@ import { EntityManager } from 'typeorm'
 
 import { AppDataSource } from '~/configs/dataSource'
 
-import { BadRequest, NotFound } from '~/exceptions'
+import { BadRequest, NotFound } from '~/helpers/exceptionHelper'
 
 import { User, EUserStatusEntity } from '~/entities/userEntity'
 import { EUserTokenTypeEntity } from '~/entities/userTokenEntity'

@@ -1,5 +1,5 @@
 
-import { AppError } from '~/exceptions'
+import { AppError } from '~/helpers/exceptionHelper'
 
 import { response } from '~/helpers/responseHelper'
 
@@ -10,6 +10,7 @@ export const errorMiddleware = (
   next: Next
 ) => {
   if (process?.env?.MODE !== 'production') console.error('[ERROR] => ', err)
+
   const globalErrorMessage = process?.env?.MODE === 'producton'
     ? 'Internal server error'
     : err?.message ?? 'Error'
@@ -21,11 +22,13 @@ export const errorMiddleware = (
       field?: Record<string, unknown>
     } = {
       status: err.status,
-      message: err.message,
+      message: globalErrorMessage,
     }
 
-    if (err.status === 422) {
-      errorObject.field = err.field as Record<string, unknown>
+    if (err.status === 400 || err.status === 422) {
+      if (err.field) {
+        errorObject.field = err.field as Record<string, unknown>
+      }
     }
 
     if (err.status >= 500) {

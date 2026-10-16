@@ -23,7 +23,6 @@ export type TParsedParams = {
   date?: string | undefined
   startDate?: string | undefined
   endDate?: string | undefined
-  fullRelation?: '1' | undefined
   roleId?: string | undefined
   userId?: string | undefined
 }
@@ -107,9 +106,6 @@ export const parseParams = (req: Req): TParsedParams => {
   const endDate =
     typeof q.endDate === 'string' && q.endDate ? q.endDate : undefined
 
-  const fullRelation =
-    typeof q.fullRelation === 'string' && q.fullRelation === '1' ? q.fullRelation : undefined
-
   const roleId =
     typeof q.roleId === 'string' && q.roleId ? q.roleId : undefined
 
@@ -125,7 +121,6 @@ export const parseParams = (req: Req): TParsedParams => {
     date,
     startDate,
     endDate,
-    fullRelation,
     roleId,
     userId
   }

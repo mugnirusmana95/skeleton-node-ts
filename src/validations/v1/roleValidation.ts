@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { orderByRegex, EStatusDelete, allowedTextStatusDelete, TParamsLimit, ALLOWED_LIMITS } from '~/helpers/paramHelper'
+import { orderByRegex, EStatusDelete, allowedTextStatusDelete, ALLOWED_LIMITS } from '~/helpers/paramHelper'
 
 import roleRepository from '~/repositories/v1/roleRepository'
 
@@ -12,12 +12,12 @@ export type TActivationRoleBody = z.infer<typeof activationRoleSchema>
 
 const listRoleSchema = z.object({
   page: z.coerce
-    .number({ message: 'Page must be a number' })
+    .number('Page must be a number')
     .int('Page must be an integer')
     .min(1, 'Page minimum 1'),
 
   limit: z.coerce
-    .number({ message: 'Limit must be a number' })
+    .number('Limit must be a number')
     .int('Limit delete must be an integer'),
 
   search: z.string().optional(),
@@ -49,12 +49,12 @@ const listRoleSchema = z.object({
 
 const createRoleSchema = z.object({
   code: z
-    .string({ message: 'Code is required' })
+    .string('Code is required')
     .min(1, 'Code is required')
     .max(50, 'Code maximum 50 characters'),
 
   name: z
-    .string({ message: 'Name is required' })
+    .string('Name is required')
     .min(1, 'Name is required')
     .max(100, 'Name maximum 100 characters'),
 
@@ -97,12 +97,12 @@ const updateRoleSchema = z.object({
   id: z.uuidv4('Id must be a valid UUID'),
 
   code: z
-    .string({ message: 'Code is required' })
+    .string('Code is required')
     .min(1, 'Code is required')
     .max(50, 'Code maximum 50 characters'),
 
   name: z
-    .string({ message: 'Name is required' })
+    .string('Name is required')
     .min(1, 'Name is required')
     .max(100, 'Name maximum 100 characters'),
 

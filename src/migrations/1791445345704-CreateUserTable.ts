@@ -18,10 +18,15 @@ export class CreateUserTable1791445345704 implements MigrationInterface {
                 "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "deletedAt" TIMESTAMP WITH TIME ZONE NULL,
                 
-                CONSTRAINT "PK_${this.tableName}_id" PRIMARY KEY ("id"),
-                CONSTRAINT "UQ_${this.tableName}_email" UNIQUE ("email"),
-                CONSTRAINT "FK_${this.tableName}_roles_roleId" FOREIGN KEY ("roleId") 
-                    REFERENCES "public"."roles"("id") ON DELETE CASCADE ON UPDATE CASCADE
+                CONSTRAINT "PK_${this.tableName}_id"
+                    PRIMARY KEY ("id"),
+                CONSTRAINT "UQ_${this.tableName}_email"
+                    UNIQUE ("email"),
+                CONSTRAINT "FK_${this.tableName}_roles_roleId"
+                    FOREIGN KEY ("roleId") 
+                    REFERENCES "public"."roles"("id")
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE
             )`)
     }
 

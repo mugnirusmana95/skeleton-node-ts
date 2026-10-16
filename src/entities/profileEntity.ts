@@ -15,7 +15,7 @@ import { User } from '~/entities/userEntity'
 @Entity({ schema: 'public', name: 'profiles' })
 export class Profile {
   @PrimaryGeneratedColumn("uuid")
-  id: string
+  id!: string
 
   @Column({ type: 'varchar' })
   userId!: string
@@ -53,7 +53,10 @@ export class Profile {
 
   isDeleted?: boolean
 
-  @OneToOne(() => User, (user) => user.profile)
+  @OneToOne(
+    () => User,
+    (model) => model.profile
+  )
   @JoinColumn({ name: 'userId' })
   user: User
 

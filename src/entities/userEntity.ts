@@ -61,14 +61,23 @@ export class User {
 
   isDeleted?: boolean
 
-  @ManyToOne(() => Role)
+  @ManyToOne(
+    () => Role,
+    (model) => model.users
+  )
   @JoinColumn({ name: 'roleId' })
   role!: Role
 
-  @OneToOne(() => Profile, (profile) => profile.user)
+  @OneToOne(
+    () => Profile,
+    (model) => model.user
+  )
   profile: Profile
 
-  @OneToMany(() => UserToken, (userToken) => userToken.user)
+  @OneToMany(
+    () => UserToken,
+    (model) => model.user
+  )
   userTokens: UserToken[]
 
   @AfterLoad()
