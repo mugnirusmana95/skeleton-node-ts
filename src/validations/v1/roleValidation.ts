@@ -90,11 +90,11 @@ const createRoleSchema = z.object({
 })
 
 const detailRoleSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 })
 
 const updateRoleSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 
   code: z
     .string('Code is required')
@@ -137,7 +137,7 @@ const updateRoleSchema = z.object({
 })
 
 const activationRoleSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 
   isActive: z.boolean('Is active must be a boolean value (true / false)')
 

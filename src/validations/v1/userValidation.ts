@@ -199,11 +199,11 @@ const createUserSchema = z.object({
 })
 
 const detailUserSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 })
 
 const updateUserSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 
   email: z
     .string('Email is required')
@@ -328,7 +328,7 @@ const updateUserSchema = z.object({
 })
 
 const changeStatusUserSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 
   status: z
     .enum(EUserStatusEntity, {

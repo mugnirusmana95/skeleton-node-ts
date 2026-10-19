@@ -32,8 +32,17 @@ export const validate = (
   target: TValidationTarget = 'body',
 ) => {
   return async (req: Req, res: Res, next: Next) => {
+    res.locals.requestContext = {
+      method: req.method,
+      url: req.originalUrl,
+      params: { ...req.params },
+      query: { ...req.query },
+      body: { ...req.body },
+      auth: { ...req.auth }
+    }
+
     const dataToValidate = target === 'req'
-      ? { params: req.params, body: req.body, query: req.query }
+      ? { ...req.params, ...req.body, ...req.query }
       : req[target]
 
     const result = await schema.safeParseAsync(dataToValidate)

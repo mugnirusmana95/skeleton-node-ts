@@ -7,11 +7,11 @@ export type TDetailProfileQuery = z.infer<typeof detailProfileSchema>
 export type TUpdateProfileBody = z.infer<typeof updateProfileSchema>
 
 const detailProfileSchema = z.object({
-  userId: z.uuidv4('Id must be a valid UUID'),
+  userId: z.uuid('Id must be a valid UUID'),
 })
 
 const updateProfileSchema = z.object({
-  userId: z.uuidv4('Id must be a valid UUID'),
+  userId: z.uuid('Id must be a valid UUID'),
 
   firstName: z
     .string('First name is required')

@@ -1,45 +1,58 @@
 
+import { logger } from '~/configs/logger'
 import { AppError } from '~/helpers/exceptionHelper'
-
 import { response } from '~/helpers/responseHelper'
 
 export const errorMiddleware = (
   err: Error,
   req: Req,
   res: Res,
-  next: Next
+  next: Next,
 ) => {
-  if (process?.env?.MODE !== 'production') console.error('[ERROR] => ', err)
+  const isProduction = process.env.MODE === 'production'
+  const status = err instanceof AppError ? err.status : 500
 
-  const globalErrorMessage = process?.env?.MODE === 'producton'
+  const message = isProduction
     ? 'Internal server error'
-    : err?.message ?? 'Error'
+    : err.message || 'Error'
 
-  if (err instanceof AppError) {
-    let errorObject: {
-      status: number,
-      message: string
-      field?: Record<string, unknown>
-    } = {
-      status: err.status,
-      message: globalErrorMessage,
-    }
-
-    if (err.status === 400 || err.status === 422) {
-      if (err.field) {
-        errorObject.field = err.field as Record<string, unknown>
-      }
-    }
-
-    if (err.status >= 500) {
-      errorObject.message = globalErrorMessage
-    }
-
-    return response(res, errorObject)
+  const logContext = {
+    url: req.originalUrl,
+    method: req.method,
+    payload: {
+      query: res.locals.requestContext?.query,
+      params: res.locals.requestContext?.params,
+      body: res.locals.requestContext?.body,
+    },
+    auth: res.locals.requestContext?.auth ?? {},
+    err,
+    status,
   }
 
-  return response(res, {
-    status: 500,
-    message: globalErrorMessage,
-  })
+  console.log('logContext ', logContext)
+
+  if (status >= 500) {
+    logger.error(logContext, err.message)
+  } else {
+    logger.warn(logContext, err.message)
+  }
+
+  const errorObject: {
+    status: number
+    message: string
+    field?: Record<string, unknown>
+  } = {
+    status,
+    message,
+  }
+
+  if (
+    err instanceof AppError &&
+    (status === 400 || status === 422) &&
+    err.field
+  ) {
+    errorObject.field = err.field as Record<string, unknown>
+  }
+
+  return response(res, errorObject)
 }

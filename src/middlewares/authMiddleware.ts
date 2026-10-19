@@ -47,7 +47,7 @@ export const authMiddleware = async (
   }
 
   req.auth = {
-    token: '',
+    token: authorization,
     userId,
     profileId,
     expiredAt

@@ -87,11 +87,11 @@ const createFeatureActionSchema = z.object({
 })
 
 const detailFeatureActionSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID')
+  id: z.uuid('Id must be a valid UUID')
 })
 
 const updateFeatureActionSchema = z.object({
-  id: z.uuidv4('Id must be a valid UUID'),
+  id: z.uuid('Id must be a valid UUID'),
 
   code: z
     .string('Code is required')
