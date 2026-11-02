@@ -4,9 +4,10 @@ import { EUserStatusEntity, allowedTextUserStatusEntity } from '~/entities/userE
 
 import { ALLOWED_LIMITS, orderByRegex, allowedTextStatusDelete, EStatusDelete, TParamsLimit } from '~/helpers/paramHelper'
 
-import roleRepository from '~/repositories/v1/roleRepository'
-import userRepository from '~/repositories/v1/userRepository'
-import profileRepository from '~/repositories/v1/profileRepository'
+import repository from '~/repositories'
+import { User } from '~/entities/userEntity'
+import { Role } from '~/entities/roleEntity'
+import { Profile } from '~/entities/profileEntity'
 
 export type TListUserQuery = z.infer<typeof listUserSchema>
 export type TCreateUserBody = z.infer<typeof createUserSchema>
@@ -135,7 +136,8 @@ const createUserSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { email, roleId, firstName, phoneCode, phoneNumber } = data
 
-  const existingEmail = await userRepository.findBy(
+  const existingEmail = await repository.findBy(
+    User,
     { field: 'email', value: email, withDeleted: true },
   )
 
@@ -148,7 +150,8 @@ const createUserSchema = z.object({
   }
 
   if (roleId) {
-    const existingRole = await roleRepository.findBy(
+    const existingRole = await repository.findBy(
+      Role,
       { field: 'id', value: roleId },
     )
 
@@ -184,7 +187,8 @@ const createUserSchema = z.object({
   }
 
   if (phoneNumber) {
-    const existingPhoneNumber = await profileRepository.findBy(
+    const existingPhoneNumber = await repository.findBy(
+      Profile,
       { field: 'phoneNumber', value: phoneNumber, withDeleted: true },
     )
 
@@ -261,7 +265,8 @@ const updateUserSchema = z.object({
   const { id, email, roleId, firstName, phoneCode, phoneNumber } = data
 
   if (email) {
-    const existingEmail = await userRepository.findByExceptBy(
+    const existingEmail = await repository.findByExceptBy(
+      User,
       { field: 'email', value: email, withDeleted: true },
       { field: 'id', value: id }
     )
@@ -276,7 +281,8 @@ const updateUserSchema = z.object({
   }
 
   if (roleId) {
-    const existingRole = await roleRepository.findBy(
+    const existingRole = await repository.findBy(
+      Role,
       { field: 'id', value: roleId },
     )
 
@@ -312,7 +318,8 @@ const updateUserSchema = z.object({
   }
 
   if (phoneNumber) {
-    const existingPhoneNumber = await profileRepository.findByExceptBy(
+    const existingPhoneNumber = await repository.findByExceptBy(
+      Profile,
       { field: 'phoneNumber', value: phoneNumber, withDeleted: true },
       { field: 'userId', value: id }
     )
@@ -344,7 +351,7 @@ const changeStatusUserSchema = z.object({
     })
   }
 
-  const user = await userRepository.findBy({
+  const user = await repository.findBy(User, {
     field: 'id',
     value: id
   })

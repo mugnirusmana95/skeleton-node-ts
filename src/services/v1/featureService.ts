@@ -1,39 +1,37 @@
 import { AppDataSource } from '~/configs/dataSource'
 import { NotFound } from '~/helpers/exceptionHelper'
-
 import { parseParams } from '~/helpers/paramHelper'
-import { TResGetListPaginateFeatureAction } from '~/repositories/v1/featureActionRepository'
-
-import featureRepository, { TResFindFeature, TResGetListPaginateFeature } from '~/repositories/v1/featureRepository'
-
+import repository, { TResGetListPaginate } from '~/repositories'
+import { Feature } from '~/entities/featureEntity'
 import { TCreateFeatureBody, TUpdateFeatureBody } from '~/validations/v1/featureValidation'
 
 export default {
-  getList: async (req: Req): TResGetListPaginateFeature => {
+  getList: async (req: Req): TResGetListPaginate<Feature> => {
     const params = parseParams(req)
-    const data = await featureRepository.getListPaginate(params)
-    return data
+    return await repository.getListPaginate(Feature, params, {
+      searchFields: ['feature.code', 'feature.name'],
+    })
   },
 
-  create: async (payload: TCreateFeatureBody): TResFindFeature => {
+  create: async (payload: TCreateFeatureBody): Promise<Feature | null> => {
     return await AppDataSource.transaction(async (trx) => {
       const { code, name, isActive } = payload
 
-      const data = await featureRepository.create({
+      const data = await repository.create(Feature, {
         code,
         name,
         isActive
       }, trx)
 
-      return await featureRepository.findBy({
+      return await repository.findBy(Feature, {
         field: 'id',
         value: data.id
       }, trx)
     })
   },
 
-  getDetail: async (id: string): TResFindFeature => {
-    const data = await featureRepository.findBy({
+  getDetail: async (id: string): Promise<Feature | null> => {
+    const data = await repository.findBy(Feature, {
       field: 'id',
       value: id,
     })
@@ -43,38 +41,40 @@ export default {
     return data
   },
 
-  update: async (id: string, payload: TUpdateFeatureBody): TResFindFeature => {
+  update: async (id: string, payload: TUpdateFeatureBody): Promise<Feature | null> => {
     return await AppDataSource.transaction(async (trx) => {
       const { code, name, isActive } = payload
-      const data = await featureRepository.findBy({
+      const data = await repository.findBy(Feature, {
         field: 'id',
         value: id,
         withSelect: ['feature.id']
       }, trx)
       if (!data) throw new NotFound('Feature not found')
 
-      await featureRepository.updateBy(
+      await repository.updateBy(
+        Feature,
         { field: 'id', value: id },
         { code, name, isActive },
         trx
       )
 
-      return await featureRepository.findBy({
+      return await repository.findBy(Feature, {
         field: 'id',
         value: data.id,
       }, trx)
     })
   },
 
-  delete: async (id: string): TResFindFeature => {
+  delete: async (id: string): Promise<Feature | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const data = await featureRepository.findBy({
+      const data = await repository.findBy(Feature, {
         field: 'id',
         value: id,
       }, trx)
       if (!data) throw new NotFound('Feature not found')
 
-      await featureRepository.deleteBy(
+      await repository.deleteBy(
+        Feature,
         { field: 'id', value: id },
         trx
       )

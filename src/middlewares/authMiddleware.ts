@@ -4,7 +4,8 @@ import { Unauthorized } from '~/helpers/exceptionHelper'
 
 import encryption from '~/helpers/encryptionHelper'
 
-import userTokenRepository from '~/repositories/v1/userTokenRepository'
+import repository from '~/repositories'
+import { UserToken } from '~/entities/userTokenEntity'
 
 export const authMiddleware = async (
   req: Req,
@@ -28,7 +29,7 @@ export const authMiddleware = async (
 
   const { userId, profileId, expiredAt } = encryption.decode(authToken) as { userId: string, profileId: string, expiredAt: Date }
 
-  const userToken = await userTokenRepository.findBy({
+  const userToken = await repository.findBy(UserToken, {
     field: 'token',
     value: authToken
   })

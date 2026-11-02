@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-import profileRepository from '~/repositories/v1/profileRepository'
-import userRepository from '~/repositories/v1/userRepository'
+import repository from '~/repositories'
+import { Profile } from '~/entities/profileEntity'
 
 export type TDetailProfileQuery = z.infer<typeof detailProfileSchema>
 export type TUpdateProfileBody = z.infer<typeof updateProfileSchema>
@@ -78,7 +78,8 @@ const updateProfileSchema = z.object({
   }
 
   if (phoneNumber) {
-    const existingPhoneNumber = await profileRepository.findByExceptBy(
+    const existingPhoneNumber = await repository.findByExceptBy(
+      Profile,
       {
         field: 'phoneNumber',
         value: phoneNumber,

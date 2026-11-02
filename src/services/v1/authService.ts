@@ -6,13 +6,14 @@ import { AppDataSource } from '~/configs/dataSource'
 import { BadRequest, NotFound } from '~/helpers/exceptionHelper'
 
 import { User, EUserStatusEntity } from '~/entities/userEntity'
+import { UserToken } from '~/entities/userTokenEntity'
 import { EUserTokenTypeEntity } from '~/entities/userTokenEntity'
 
 import encryption from '~/helpers/encryptionHelper'
 import { compareHash, generateHash, generateRandomText } from '~/helpers/hashHelper'
 
-import userTokenRepository from '~/repositories/v1/userTokenRepository'
-import userRepository, { TResFindUser } from '~/repositories/v1/userRepository'
+import repositories from '~/repositories'
+
 
 import {
   TActivationRequestBody,
@@ -25,7 +26,7 @@ import {
 const generateToken = async (userId: string, trx?: EntityManager) => {
   if (!userId || userId === "") throw new NotFound('Credential does not match or account not found')
 
-  const user = await userRepository.findBy({
+  const user = await repositories.findBy(User, {
     field: 'id',
     value: userId,
     withRelation: [
@@ -44,7 +45,7 @@ const generateToken = async (userId: string, trx?: EntityManager) => {
     expiredAt: tokenExpiredAt.toISOString()
   })
 
-  await userTokenRepository.update(
+  await repositories.update(UserToken,
     {
       where: {
         condition: 'userToken.userId = :userId AND userToken.type = :userType',
@@ -60,7 +61,7 @@ const generateToken = async (userId: string, trx?: EntityManager) => {
     , trx
   )
 
-  await userTokenRepository.create(
+  await repositories.create(UserToken,
     {
       userId: user.id,
       type: EUserTokenTypeEntity.AUTH,
@@ -85,7 +86,7 @@ export default {
   login: async (payload: TLoginAuthBody) => {
     return await AppDataSource.transaction(async (trx) => {
       const { username, password } = payload
-      const data = await userRepository.find({
+      const data = await repositories.find(User, {
         where: {
           condition: 'user.email = :username',
           value: { username }
@@ -121,7 +122,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const userId = String(req?.auth?.userId)
 
-      const data = await userRepository.findBy({
+      const data = await repositories.findBy(User, {
         field: 'id',
         value: userId,
         withAddSelect: ['user.password']
@@ -152,7 +153,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const { email } = payload
 
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'email',
         value: email
       }, trx)
@@ -176,7 +177,7 @@ export default {
         withSpecialCharacter: false
       })
 
-      await userTokenRepository.update(
+      await repositories.update(UserToken,
         {
           where: {
             condition: 'userToken.userId = :userId AND userToken.type = :userType',
@@ -192,7 +193,7 @@ export default {
         , trx
       )
 
-      await userTokenRepository.create(
+      await repositories.create(UserToken,
         {
           userId: user.id,
           type: EUserTokenTypeEntity.ACCOUUNT_ACTIVATION,
@@ -215,7 +216,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const { code } = payload
 
-      const userToken = await userTokenRepository.findBy({
+      const userToken = await repositories.findBy(UserToken, {
         field: 'token',
         value: code
       }, trx)
@@ -228,7 +229,7 @@ export default {
         throw new BadRequest('Invalid token or token is expired')
       }
 
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: userToken.userId,
       }, trx)
@@ -241,7 +242,7 @@ export default {
         throw new BadRequest('Your account status is invalid, please contact admin')
       }
 
-      await userTokenRepository.update(
+      await repositories.update(UserToken,
         {
           where: {
             condition: 'userToken.userId = :userId AND userToken.type = :userType',
@@ -257,7 +258,7 @@ export default {
         , trx
       )
 
-      await userRepository.updateBy(
+      await repositories.updateBy(User,
         {
           field: 'id',
           value: userToken.userId,
@@ -276,7 +277,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const { email } = payload
 
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'email',
         value: email
       }, trx)
@@ -300,7 +301,7 @@ export default {
         withSpecialCharacter: false
       })
 
-      await userTokenRepository.update(
+      await repositories.update(UserToken,
         {
           where: {
             condition: 'userToken.userId = :userId AND userToken.type = :userType',
@@ -316,7 +317,7 @@ export default {
         , trx
       )
 
-      await userTokenRepository.create(
+      await repositories.create(UserToken,
         {
           userId: user.id,
           type: EUserTokenTypeEntity.CHANGE_PASSWORD,
@@ -339,7 +340,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const { code, password } = payload
 
-      const userToken = await userTokenRepository.findBy({
+      const userToken = await repositories.findBy(UserToken, {
         field: 'token',
         value: code
       }, trx)
@@ -352,7 +353,7 @@ export default {
         throw new BadRequest('Invalid token or token is expired')
       }
 
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: userToken.userId,
       }, trx)
@@ -366,7 +367,7 @@ export default {
         throw new BadRequest('Your account status is invalid, please contact admin')
       }
 
-      await userTokenRepository.update(
+      await repositories.update(UserToken,
         {
           where: {
             condition: 'userToken.userId = :userId AND userToken.type = :userType',
@@ -384,7 +385,7 @@ export default {
 
       const hashedPassword = await generateHash(password)
 
-      await userRepository.updateBy(
+      await repositories.updateBy(User,
         {
           field: 'id',
           value: userToken.userId,
@@ -403,7 +404,7 @@ export default {
     return await AppDataSource.transaction(async (trx) => {
       const userId = String(req?.auth?.userId)
 
-      await userTokenRepository.update(
+      await repositories.update(UserToken,
         {
           where: {
             condition: 'userToken.userId = :userId AND userToken.type = :userType',

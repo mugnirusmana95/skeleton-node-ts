@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 import { orderByRegex, EStatusDelete, allowedTextStatusDelete, ALLOWED_LIMITS } from '~/helpers/paramHelper'
 
-import featureRepository from '~/repositories/v1/featureRepository'
+import repository from '~/repositories'
+import { Feature } from '~/entities/featureEntity'
 
 export type TListFeatureQuery = z.infer<typeof listFeatureSchema>
 export type TCreateFeatureBody = z.infer<typeof createFeatureSchema>
@@ -59,7 +60,7 @@ const createFeatureSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { code, name } = data
 
-  const codeExist = await featureRepository.findBy({
+  const codeExist = await repository.findBy(Feature, {
     field: 'code',
     value: code,
     withDeleted: true
@@ -72,7 +73,7 @@ const createFeatureSchema = z.object({
     })
   }
 
-  const nameExist = await featureRepository.findBy({
+  const nameExist = await repository.findBy(Feature, {
     field: 'name',
     value: name,
     withDeleted: true
@@ -105,7 +106,8 @@ const updateFeatureSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { id, code, name } = data
 
-  const codeExist = await featureRepository.findByExceptBy(
+  const codeExist = await repository.findByExceptBy(
+    Feature,
     { field: 'code', value: code },
     { field: 'id', value: id },
   )
@@ -118,7 +120,8 @@ const updateFeatureSchema = z.object({
     })
   }
 
-  const nameExist = await featureRepository.findByExceptBy(
+  const nameExist = await repository.findByExceptBy(
+    Feature,
     { field: 'name', value: name },
     { field: 'id', value: id },
   )

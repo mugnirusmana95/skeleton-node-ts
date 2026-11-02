@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 import { orderByRegex, EStatusDelete, allowedTextStatusDelete, ALLOWED_LIMITS } from '~/helpers/paramHelper'
 
-import roleRepository from '~/repositories/v1/roleRepository'
+import repository from '~/repositories'
+import { Role } from '~/entities/roleEntity'
 
 export type TListRoleQuery = z.infer<typeof listRoleSchema>
 export type TCreateRoleBody = z.infer<typeof createRoleSchema>
@@ -62,7 +63,7 @@ const createRoleSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { code, name } = data
 
-  const existingCode = await roleRepository.findBy({
+  const existingCode = await repository.findBy(Role, {
     field: 'code',
     value: code,
     withDeleted: true
@@ -75,7 +76,7 @@ const createRoleSchema = z.object({
     })
   }
 
-  const existingName = await roleRepository.findBy({
+  const existingName = await repository.findBy(Role, {
     field: 'name',
     value: name,
     withDeleted: true
@@ -109,7 +110,8 @@ const updateRoleSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { id, code, name } = data
 
-  const existingCode = await roleRepository.findByExceptBy(
+  const existingCode = await repository.findByExceptBy(
+    Role,
     { field: 'code', value: code, withDeleted: true },
     { field: 'id', value: id }
   )
@@ -122,7 +124,8 @@ const updateRoleSchema = z.object({
     })
   }
 
-  const existingName = await roleRepository.findByExceptBy(
+  const existingName = await repository.findByExceptBy(
+    Role,
     { field: 'name', value: name, withDeleted: true },
     { field: 'id', value: id }
   )
@@ -151,7 +154,7 @@ const activationRoleSchema = z.object({
     })
   }
 
-  const role = await roleRepository.findBy({
+  const role = await repository.findBy(Role, {
     field: 'id',
     value: id
   })

@@ -1,17 +1,15 @@
 import { AppDataSource } from "~/configs/dataSource";
-
 import { NotFound } from "~/helpers/exceptionHelper";
-import { groupRolePermissions, TGroupedRolePermission } from "~/helpers/groupRolePermissionHelper";
-
-import featurePermissionRepository from "~/repositories/v1/featurePermissionRepository";
-import rolePermissionRepository, { TResGetRolePermission } from "~/repositories/v1/rolePermissionRepository";
-import roleRepository from "~/repositories/v1/roleRepository";
-
+import { groupRolePermissions } from "~/helpers/groupRolePermissionHelper";
+import repository from "~/repositories";
+import { Role } from "~/entities/roleEntity";
+import { FeaturePermission } from "~/entities/featurePermissionEntity";
+import { RolePermission } from "~/entities/rolePermissionEntity";
 import { TUdpateRolePermissionBody } from "~/validations/v1/rolePermissionValidation";
 
 export default {
   getList: async (roleId: string) => {
-    const data = await rolePermissionRepository.getBy({
+    const data = await repository.getBy(RolePermission, {
       field: 'roleId',
       value: roleId,
       withRelation: [
@@ -22,13 +20,13 @@ export default {
       ],
     })
 
-    return groupRolePermissions(data)
+    return groupRolePermissions(data as any)
   },
 
   update: async (roleId: string, payload: TUdpateRolePermissionBody) => {
     return await AppDataSource.transaction(async (trx) => {
       const { access } = payload
-      const role = await roleRepository.findBy({
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: roleId
       }, trx)
@@ -36,7 +34,8 @@ export default {
 
       for (const item of access) {
         const { featureId, featureActionId, isActive } = item
-        const featurePermission = await featurePermissionRepository.find(
+        const featurePermission = await repository.find(
+          FeaturePermission,
           {
             where: {
               condition: `
@@ -52,19 +51,20 @@ export default {
         )
 
         if (!featurePermission) {
-          const result = await featurePermissionRepository.create({
+          const result = await repository.create(FeaturePermission, {
             featureId,
             featureActionId,
             isActive: true
           }, trx)
 
-          await rolePermissionRepository.create({
+          await repository.create(RolePermission, {
             roleId,
             featurePermissionId: result.id,
             isActive
           }, trx)
         } else {
-          const rolePermission = await rolePermissionRepository.find(
+          const rolePermission = await repository.find(
+            RolePermission,
             {
               where: {
                 condition: `
@@ -83,13 +83,14 @@ export default {
           )
 
           if (!rolePermission) {
-            await rolePermissionRepository.create({
+            await repository.create(RolePermission, {
               roleId: role.id,
               featurePermissionId: featurePermission.id,
               isActive
             }, trx)
           } else {
-            await rolePermissionRepository.updateBy(
+            await repository.updateBy(
+              RolePermission,
               {
                 field: 'id',
                 value: rolePermission.id
@@ -101,7 +102,7 @@ export default {
         }
       }
 
-      const data = await rolePermissionRepository.getBy({
+      const data = await repository.getBy(RolePermission, {
         field: 'roleId',
         value: roleId,
         withRelation: [
@@ -112,7 +113,7 @@ export default {
         ],
       }, trx)
 
-      return groupRolePermissions(data)
+      return groupRolePermissions(data as any)
     })
   }
 }

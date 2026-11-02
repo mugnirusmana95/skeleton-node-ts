@@ -60,7 +60,7 @@ export class UserToken {
 
   @AfterLoad()
   computeStatusText() {
-    if (typeof this.type === 'undefined') {
+    if (typeof this.type === 'undefined' || !this.type) {
       delete this.typeText
     } else {
       this.typeText = EUserTokenTypeEntity[this.type] || 'UNKNOWN'
@@ -69,7 +69,7 @@ export class UserToken {
 
   @AfterLoad()
   computeIsDeleted() {
-    if (typeof this.deletedAt === 'undefined') {
+    if (typeof this.deletedAt === 'undefined' || !this.deletedAt) {
       delete this.isDeleted
     } else {
       this.isDeleted = this.deletedAt ? true : false

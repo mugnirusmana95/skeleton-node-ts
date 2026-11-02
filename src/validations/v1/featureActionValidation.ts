@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 import { orderByRegex, EStatusDelete, allowedTextStatusDelete, ALLOWED_LIMITS } from '~/helpers/paramHelper'
 
-import featureActionRepository from '~/repositories/v1/featureActionRepository'
+import repository from '~/repositories'
+import { FeatureAction } from '~/entities/featureActionEntity'
 
 export type TListFeatureActionQuery = z.infer<typeof listFeatureActionSchema>
 export type TCreateFeatureActionBody = z.infer<typeof createFeatureActionSchema>
@@ -59,7 +60,7 @@ const createFeatureActionSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { code, name } = data
 
-  const codeExist = await featureActionRepository.findBy({
+  const codeExist = await repository.findBy(FeatureAction, {
     field: 'code',
     value: code,
     withDeleted: true
@@ -72,7 +73,7 @@ const createFeatureActionSchema = z.object({
     })
   }
 
-  const nameExist = await featureActionRepository.findBy({
+  const nameExist = await repository.findBy(FeatureAction, {
     field: 'name',
     value: name,
     withDeleted: true
@@ -105,7 +106,8 @@ const updateFeatureActionSchema = z.object({
 }).superRefine(async (data, ctx) => {
   const { id, code, name } = data
 
-  const codeExist = await featureActionRepository.findByExceptBy(
+  const codeExist = await repository.findByExceptBy(
+    FeatureAction,
     { field: 'code', value: code },
     { field: 'id', value: id },
   )
@@ -118,7 +120,8 @@ const updateFeatureActionSchema = z.object({
     })
   }
 
-  const nameExist = await featureActionRepository.findByExceptBy(
+  const nameExist = await repository.findByExceptBy(
+    FeatureAction,
     { field: 'name', value: name },
     { field: 'id', value: id },
   )

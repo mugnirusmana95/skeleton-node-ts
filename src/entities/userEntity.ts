@@ -82,7 +82,7 @@ export class User {
 
   @AfterLoad()
   computeStatusText() {
-    if (typeof this.status === 'undefined') {
+    if (typeof this.status === 'undefined' || !this.status) {
       delete this.statusText
     } else {
       this.statusText = EUserStatusEntity[this.status] || 'UNKNOWN'
@@ -91,7 +91,7 @@ export class User {
 
   @AfterLoad()
   computeIsDeleted() {
-    if (typeof this.deletedAt === 'undefined') {
+    if (typeof this.deletedAt === 'undefined' || !this.deletedAt) {
       delete this.isDeleted
     } else {
       this.isDeleted = this.deletedAt ? true : false

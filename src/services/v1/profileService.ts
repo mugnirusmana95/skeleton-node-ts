@@ -1,19 +1,15 @@
 import { AppDataSource } from "~/configs/dataSource"
-
 import { NotFound } from "~/helpers/exceptionHelper"
-
-import userRepository, {
-  TResFindUser,
-} from "~/repositories/v1/userRepository"
-import profileRepository from "~/repositories/v1/profileRepository"
-
+import repository from "~/repositories"
+import { User } from "~/entities/userEntity"
+import { Profile } from "~/entities/profileEntity"
 import {
   TUpdateProfileBody
 } from "~/validations/v1/profileValidation"
 
 export default {
-  getDetail: async (userId: string): TResFindUser => {
-    const user = await userRepository.findBy({
+  getDetail: async (userId: string): Promise<User | null> => {
+    const user = await repository.findBy(User, {
       field: 'id',
       value: userId,
       withRelation: [
@@ -26,15 +22,15 @@ export default {
     return user
   },
 
-  update: async (userId: string, data: TUpdateProfileBody): TResFindUser => {
+  update: async (userId: string, data: TUpdateProfileBody): Promise<User | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repository.findBy(User, {
         field: 'id',
         value: userId
       }, trx)
       if (!user) throw new NotFound('Profile not found')
 
-      await profileRepository.updateBy({
+      await repository.updateBy(Profile, {
         field: 'id',
         value: user.profile.id
       }, {
@@ -44,7 +40,7 @@ export default {
         address: data.address,
       }, trx)
 
-      return await userRepository.findBy({
+      return await repository.findBy(User, {
         field: 'id',
         value: user.id,
         withRelation: [

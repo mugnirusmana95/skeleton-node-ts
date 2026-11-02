@@ -11,7 +11,8 @@
     "migration:create": "typeorm migration:create",
     "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d src/configs/dataSource.ts",
     "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/configs/dataSource.ts",
-    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/configs/dataSource.ts"
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/configs/dataSource.ts",
+    "seed": "tsx src/seeders/index.ts"
   },
   "keywords": [],
   "author": "",

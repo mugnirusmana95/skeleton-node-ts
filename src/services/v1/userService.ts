@@ -1,21 +1,13 @@
-import { Request } from "express"
-
 import { AppDataSource } from "~/configs/dataSource"
 
-import { EUserStatusEntity } from '~/entities/userEntity'
+import { EUserStatusEntity, User } from '~/entities/userEntity'
 
 import { NotFound } from "~/helpers/exceptionHelper"
 import { generateHash, generateRandomText } from "~/helpers/hashHelper"
 
-import { parseParams } from "~/helpers/paramHelper"
+import { parseParams, TParsedParams } from "~/helpers/paramHelper"
 
-import roleRepository from "~/repositories/v1/roleRepository"
-import userRepository, {
-  TResGetListPaginateUser,
-  TResFindUser,
-  TResGetUser,
-} from "~/repositories/v1/userRepository"
-import profileRepository from "~/repositories/v1/profileRepository"
+// import profileRepository from "~/repositories/v1/profileRepository"
 
 import {
   TCreateUserBody,
@@ -23,16 +15,19 @@ import {
   TChangeStatusUserBody
 } from "~/validations/v1/userValidation"
 
+import repositories from '~/repositories'
+import { Role } from "~/entities/roleEntity"
+import { Profile } from "~/entities/profileEntity"
 
 export default {
-  getList: async (req: Req): TResGetListPaginateUser => {
+  getList: async (req: Req) => {
     const params = parseParams(req)
-    return await userRepository.getListPaginate(params)
+    return await repositories.getListPaginate(User, params)
   },
 
-  create: async (payload: TCreateUserBody): TResFindUser => {
+  create: async (payload: TCreateUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await roleRepository.findBy({
+      const role = await repositories.findBy(Role, {
         field: 'id',
         value: payload.roleId
       }, trx)
@@ -46,14 +41,14 @@ export default {
 
       const hasedPassword = await generateHash(password)
 
-      const dataUser = await userRepository.create({
+      const dataUser = await repositories.create(User, {
         email: payload.email,
         password: hasedPassword,
         roleId: role.id,
         status: payload.status ?? EUserStatusEntity.INACTIVE,
       }, trx)
 
-      await profileRepository.create({
+      await repositories.create(Profile, {
         userId: dataUser.id,
         firstName: payload.firstName,
         middleName: payload.middleName,
@@ -63,7 +58,7 @@ export default {
         address: payload.address,
       }, trx)
 
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: dataUser.id,
         withRelation: [
@@ -77,8 +72,8 @@ export default {
     })
   },
 
-  getDetail: async (id: string): TResFindUser => {
-    const user = await userRepository.findBy({
+  getDetail: async (id: string) => {
+    const user = await repositories.findBy(User, {
       field: 'id',
       value: id,
       withRelation: [
@@ -91,15 +86,15 @@ export default {
     return user
   },
 
-  update: async (id: string, data: TUpdateUserBody): TResFindUser => {
+  update: async (id: string, data: TUpdateUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: id
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await userRepository.updateBy({
+      await repositories.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
@@ -107,7 +102,7 @@ export default {
         roleId: data.roleId,
       }, trx)
 
-      return await userRepository.findBy({
+      return await repositories.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -118,22 +113,22 @@ export default {
     })
   },
 
-  changeStatus: async (id: string, data: TChangeStatusUserBody): TResFindUser => {
+  changeStatus: async (id: string, data: TChangeStatusUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: id
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await userRepository.updateBy({
+      await repositories.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
         status: data.status,
       }, trx)
 
-      return await userRepository.findBy({
+      return await repositories.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -144,9 +139,9 @@ export default {
     })
   },
 
-  resetPassword: async (id: string): TResFindUser => {
+  resetPassword: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: id
       }, trx)
@@ -160,14 +155,14 @@ export default {
 
       const hasedPassword = await generateHash(password)
 
-      await userRepository.updateBy({
+      await repositories.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
         password: hasedPassword,
       }, trx)
 
-      return await userRepository.findBy({
+      return await repositories.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -178,9 +173,9 @@ export default {
     })
   },
 
-  delete: async (id: string): TResFindUser => {
+  delete: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -190,7 +185,7 @@ export default {
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await userRepository.deleteBy({
+      await repositories.deleteBy(User, {
         field: 'id',
         value: user.id
       }, trx)
@@ -199,27 +194,8 @@ export default {
     })
   },
 
-  getByStatus: async (status: number): TResGetUser => {
-    // return await userRepository.get({
-    //   where: {
-    //     condition: 'status = :status',
-    //     value: { status }
-    //   },
-    //   withSelect: ['profile.id', 'user.id', 'role.id'],
-    //   withRelation: [
-    //     { relation: 'user.profile', alias: 'profile' },
-    //     { relation: 'user.role', alias: 'role' }
-    //   ],
-    //   withOrderBy: [
-    //     { orderBy: 'profile.id', direction: 'DESC' },
-    //     { orderBy: 'user.id' },
-    //     { orderBy: 'role.id', direction: 'ASC' },
-    //   ],
-    //   withGroupBy: ['profile.id', 'user.id', 'role.id'],
-    //   withDeleted: true
-    // })
-
-    return await userRepository.getBy({
+  getByStatus: async (status: number) => {
+    return await repositories.getBy(User, {
       field: 'status',
       value: status,
       withSelect: ['profile.id', 'user.id', 'role.id'],
@@ -237,9 +213,9 @@ export default {
     })
   },
 
-  permanentDelete: async (id: string): TResFindUser => {
+  permanentDelete: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await userRepository.findBy({
+      const user = await repositories.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -249,7 +225,7 @@ export default {
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await userRepository.deleteBy({
+      await repositories.deleteBy(User, {
         field: 'id',
         value: user.id,
         permanentDelete: true

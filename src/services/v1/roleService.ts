@@ -1,17 +1,9 @@
-import { Request } from "express"
-
 import { AppDataSource } from "~/configs/dataSource"
-
 import { BadRequest, NotFound } from "~/helpers/exceptionHelper"
-
 import { parseParams } from "~/helpers/paramHelper"
-
-import roleRepository, {
-  TResGetListPaginateRole,
-  TResFindRole,
-} from "~/repositories/v1/roleRepository"
-import userRepository from "~/repositories/v1/userRepository"
-
+import repository, { TResGetListPaginate } from "~/repositories"
+import { Role } from "~/entities/roleEntity"
+import { User } from "~/entities/userEntity"
 import {
   TCreateRoleBody,
   TUpdateRoleBody,
@@ -19,27 +11,29 @@ import {
 } from "~/validations/v1/roleValidation"
 
 export default {
-  getList: async (req: Req): TResGetListPaginateRole => {
+  getList: async (req: Req): TResGetListPaginate<Role> => {
     const params = parseParams(req)
-    return await roleRepository.getListPaginate(params)
+    return await repository.getListPaginate(Role, params, {
+      searchFields: ['role.code', 'role.name'],
+    })
   },
 
-  create: async (payload: TCreateRoleBody): TResFindRole => {
+  create: async (payload: TCreateRoleBody): Promise<Role | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const data = await roleRepository.create({
+      const data = await repository.create(Role, {
         ...payload,
         isActive: true
       }, trx)
 
-      return await roleRepository.findBy({
+      return await repository.findBy(Role, {
         field: 'id',
         value: data.id
       }, trx)
     })
   },
 
-  getDetail: async (id: string): TResFindRole => {
-    const role = await roleRepository.findBy({
+  getDetail: async (id: string): Promise<Role | null> => {
+    const role = await repository.findBy(Role, {
       field: 'id',
       value: id
     })
@@ -48,15 +42,16 @@ export default {
     return role
   },
 
-  update: async (id: string, payload: TUpdateRoleBody): TResFindRole => {
+  update: async (id: string, payload: TUpdateRoleBody): Promise<Role | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await roleRepository.findBy({
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: id
       }, trx)
       if (!role) throw new NotFound('Role not found')
 
-      await roleRepository.updateBy(
+      await repository.updateBy(
+        Role,
         {
           field: 'id',
           value: id
@@ -68,7 +63,7 @@ export default {
         trx
       )
 
-      return await roleRepository.findBy({
+      return await repository.findBy(Role, {
         field: 'id',
         value: id
       }, trx)
@@ -77,13 +72,14 @@ export default {
 
   activation: async (id: string, payload: TActivationRoleBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await roleRepository.findBy({
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: id
       }, trx)
       if (!role) throw new NotFound('Role not found')
 
-      await roleRepository.updateBy(
+      await repository.updateBy(
+        Role,
         {
           field: 'id',
           value: id
@@ -94,28 +90,28 @@ export default {
         trx
       )
 
-      return await roleRepository.findBy({
+      return await repository.findBy(Role, {
         field: 'id',
         value: id
       }, trx)
     })
   },
 
-  delete: async (id: string): TResFindRole => {
+  delete: async (id: string): Promise<Role | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await roleRepository.findBy({
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: id
       })
       if (!role) throw new NotFound('Role not found')
 
-      const users = await userRepository.getBy({
+      const users = await repository.getBy(User, {
         field: 'roleId',
         value: role.id
       }, trx)
       if (users.length > 0) throw new BadRequest(`Role already in used, can not delete role ${role.name}`)
 
-      await roleRepository.deleteBy({
+      await repository.deleteBy(Role, {
         field: 'id',
         value: role.id
       }, trx)
@@ -124,21 +120,21 @@ export default {
     })
   },
 
-  permanentDelete: async (id: string): TResFindRole => {
+  permanentDelete: async (id: string): Promise<Role | null> => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await roleRepository.findBy({
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: id
       })
       if (!role) throw new NotFound('Role not found')
 
-      const users = await userRepository.getBy({
+      const users = await repository.getBy(User, {
         field: 'roleId',
         value: role.id
       }, trx)
       if (users.length > 0) throw new BadRequest(`Role already in used, can not delete role ${role.name}`)
 
-      await roleRepository.deleteBy({
+      await repository.deleteBy(Role, {
         field: 'id',
         value: role.id,
         permanentDelete: true

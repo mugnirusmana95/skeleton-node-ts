@@ -1,7 +1,8 @@
 
 import { Forbidden, InternalServer, Unauthorized } from '~/helpers/exceptionHelper'
-import userRepository from '~/repositories/v1/userRepository'
-import rolePermissionRepository from '~/repositories/v1/rolePermissionRepository'
+import repository from '~/repositories'
+import { User } from '~/entities/userEntity'
+import { RolePermission } from '~/entities/rolePermissionEntity'
 
 type PermissionType = 'permission' | 'role'
 
@@ -14,7 +15,7 @@ export const permissionMiddleware = (
 
     if (!authorization || !req.auth?.userId) throw new Unauthorized('Authentication is required. Please login first.')
 
-    const user = await userRepository.findBy({
+    const user = await repository.findBy(User, {
       field: 'id',
       value: String(req.auth.userId),
       withRelation: [
@@ -57,7 +58,7 @@ export const permissionMiddleware = (
 
     const permissionResults = await Promise.all(
       permissions.map(({ featureRequired, actionRequired }) =>
-        rolePermissionRepository.find({
+        repository.find(RolePermission, {
           where: {
             condition: `
               rolePermission.roleId = :roleIdRequired AND
