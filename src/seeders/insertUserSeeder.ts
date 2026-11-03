@@ -1,5 +1,4 @@
 import { AppDataSource } from '~/configs/dataSource'
-import { Feature } from '~/entities/featureEntity'
 import { Role } from '~/entities/roleEntity'
 import { EUserStatusEntity, User } from '~/entities/userEntity'
 import repository from '~/repositories'
@@ -33,7 +32,7 @@ const users: TUserSeed[] = [
 
 const defaultPassword = process.env.DEFAULT_PASSWORD || ""
 
-export const createFirstUserSeeder = async () => {
+export const insertUserSeeder = async () => {
   return await AppDataSource.transaction(async (trx) => {
     for (const item of users) {
       console.log('----------------------------------------------')
@@ -73,5 +72,3 @@ export const createFirstUserSeeder = async () => {
     }
   })
 }
-
-export default createFirstUserSeeder

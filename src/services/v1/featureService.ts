@@ -4,12 +4,11 @@ import { parseParams } from '~/helpers/paramHelper'
 import repository, { TResGetListPaginate } from '~/repositories'
 import { Feature } from '~/entities/featureEntity'
 import { TCreateFeatureBody, TUpdateFeatureBody } from '~/validations/v1/featureValidation'
-import { EFilterPagination } from '~/helpers/paginationHelper'
 
 export default {
   getList: async (req: Req): TResGetListPaginate<Feature> => {
     const params = parseParams(req)
-    return await repository.getListPaginate(Feature, params, EFilterPagination.FEATURE)
+    return await repository.getListPaginate(Feature, params)
   },
 
   create: async (payload: TCreateFeatureBody): Promise<Feature | null> => {

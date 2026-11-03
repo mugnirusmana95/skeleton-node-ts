@@ -24,7 +24,7 @@ import entityHelper, {
   TStringKey,
 } from '~/helpers/entityHelper'
 import { TParsedParams } from '~/helpers/paramHelper'
-import filterPaginate, { EFilterPagination, paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
+import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
 
 export type { TResGetListPaginate } from '~/helpers/paginationHelper'
 export type TResFind<T> = Promise<T | null>
@@ -402,27 +402,25 @@ export const deleteBy = async <T extends ObjectLiteral, K extends TStringKey<T>>
 export const getListPaginate = async <T extends ObjectLiteral>(
   target: EntityTarget<T>,
   params: TParsedParams,
-  type: EFilterPagination,
   trx?: EntityManager
 ): TResGetListPaginate<T> => {
   const alias = getAlias(target, trx)
   const { page = 1, limit = 10 } = params
 
   const query = getRepo(target, trx).createQueryBuilder(alias)
-  await filterPaginate<T>(query, params, type)
+  await query.filterList(params)
   return paginate(query, { page, limit })
 }
 
 export const getList = async <T extends ObjectLiteral>(
   target: EntityTarget<T>,
   params: TParsedParams,
-  type: EFilterPagination,
   trx?: EntityManager
 ): Promise<SelectQueryBuilder<T>> => {
   const alias = getAlias(target, trx)
 
   const query = getRepo(target, trx).createQueryBuilder(alias)
-  await filterPaginate<T>(query, params, type)
+  await query.filterList(params)
   return query
 }
 

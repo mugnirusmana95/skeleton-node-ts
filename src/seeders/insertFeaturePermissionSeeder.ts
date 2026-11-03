@@ -1,6 +1,6 @@
 import { AppDataSource } from '~/configs/dataSource'
-import { features } from '~/seeders/UpsertFeatureSeeder'
-import { permissions } from '~/seeders/UpsertPermissionSeeder'
+import { features } from '~/seeders/insertFeatureSeeder'
+import { permissions } from '~/seeders/insertPermissionSeeder'
 import { Feature } from '~/entities/featureEntity'
 import { FeatureAction } from '~/entities/featureActionEntity'
 import { FeaturePermission } from '~/entities/featurePermissionEntity'
@@ -32,7 +32,7 @@ const mergeFeaturePermission = async (): Promise<TFeaturePermissionSeed[]> => {
   return result
 }
 
-export const upsertFeaturePermissionSeeder = async () => {
+export const insertFeaturePermissionSeeder = async () => {
   return AppDataSource.transaction(async (trx) => {
     const data = await mergeFeaturePermission()
     for (const item of data) {
@@ -41,11 +41,11 @@ export const upsertFeaturePermissionSeeder = async () => {
       console.log('FINDING Feature Permission ', featureCode, permissionCode)
       if (!featureId || !permissionId) {
         if (!featureId && permissionId) {
-          console.log('Feature not found, skipped')
+          console.log('Feature not found, skipped...')
         } else if (featureId && !permissionId) {
-          console.log('Permission not found, skipped')
+          console.log('Permission not found, skipped...')
         } else if (!featureId && !permissionId) {
-          console.log('Feature and Permission not found, skipped')
+          console.log('Feature and Permission not found, skipped...')
         }
         continue
       }
@@ -68,13 +68,10 @@ export const upsertFeaturePermissionSeeder = async () => {
         }, trx)
         console.log('CREATED Feature Access.....')
       } else {
-        console.log('Feature Access found')
-        console.log('UPDATING Feature Access')
-        await repository.updateBy(FeaturePermission, { field: 'id', value: result?.id }, { featureActionId: permissionId, featureId: featureId }, trx)
-        console.log('UPDATED Feature Access.....')
+        console.log('Feature Access found, skipped...')
       }
     }
   })
 }
 
-export default upsertFeaturePermissionSeeder
+export default insertFeaturePermissionSeeder

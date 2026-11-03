@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import dotenv from 'dotenv'
+import '~/helpers/queryBuilderHelper'
 
 dotenv.config()
 

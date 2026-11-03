@@ -52,7 +52,6 @@ app.use(
 app.use(
   '/users',
   authMiddleware,
-  permissionMiddleware('su', 'role'),
   userRoute
 )
 

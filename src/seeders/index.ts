@@ -1,11 +1,12 @@
 import 'reflect-metadata'
 import dotenv from 'dotenv'
 import { AppDataSource } from '~/configs/dataSource'
-import { upsertRoleSeeder } from '~/seeders/UpsertRoleSeeder'
-import { upsertFeatureSeeder } from '~/seeders/UpsertFeatureSeeder'
-import { upsertPermissionSeeder } from '~/seeders/UpsertPermissionSeeder'
-import { upsertFeaturePermissionSeeder } from '~/seeders/UpsertFeaturePermissionSeeder'
-import createFirstUserSeeder from './CreateFirstUserSeeder'
+
+import { insertRoleSeeder } from '~/seeders/insertRoleSeeder'
+import { insertFeatureSeeder } from '~/seeders/insertFeatureSeeder'
+import { insertPermissionSeeder } from '~/seeders/insertPermissionSeeder'
+import { insertFeaturePermissionSeeder } from '~/seeders/insertFeaturePermissionSeeder'
+import { insertUserSeeder } from '~/seeders/insertUserSeeder'
 
 dotenv.config()
 
@@ -23,25 +24,25 @@ export const runSeeders = async () => {
     console.log('🌱 MEMULAI PROSES DATABASE SEEDING')
     console.log('====================================\n')
 
-    console.log('[1]. Menjalankan UpsertRoleSeeder...')
-    await upsertRoleSeeder()
-    console.log('✅ UpsertRoleSeeder selesai.\n')
+    console.log('[1]. Menjalankan insertRoleSeeder...')
+    await insertRoleSeeder()
+    console.log('✅ insertRoleSeeder selesai.\n')
 
-    console.log('[2]. Menjalankan UpsertFeatureSeeder...')
-    await upsertFeatureSeeder()
-    console.log('✅ UpsertFeatureSeeder selesai.\n')
+    console.log('[2]. Menjalankan insertFeatureSeeder...')
+    await insertFeatureSeeder()
+    console.log('✅ insertFeatureSeeder selesai.\n')
 
-    console.log('[3]. Menjalankan UpsertPermissionSeeder...')
-    await upsertPermissionSeeder()
-    console.log('✅ UpsertPermissionSeeder selesai.\n')
+    console.log('[3]. Menjalankan insertPermissionSeeder...')
+    await insertPermissionSeeder()
+    console.log('✅ insertPermissionSeeder selesai.\n')
 
     console.log('[4]. Menjalankan UpsertFeaturePermission...')
-    await upsertFeaturePermissionSeeder()
+    await insertFeaturePermissionSeeder()
     console.log('✅ UpsertFeaturePermission selesai.\n')
 
-    console.log('[5]. Menjalankan createFirstUserSeeder...')
-    await createFirstUserSeeder()
-    console.log('✅ createFirstUserSeeder selesai.\n')
+    console.log('[5]. Menjalankan insertUserSeeder...')
+    await insertUserSeeder()
+    console.log('✅ insertUserSeeder selesai.\n')
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
     console.log('====================================')

@@ -6,7 +6,6 @@ import { NotFound } from "~/helpers/exceptionHelper"
 import { generateHash, generateRandomText } from "~/helpers/hashHelper"
 
 import { parseParams } from "~/helpers/paramHelper"
-import { EFilterPagination } from "~/helpers/paginationHelper"
 
 import {
   TCreateUserBody,
@@ -21,7 +20,7 @@ import { Profile } from "~/entities/profileEntity"
 export default {
   getList: async (req: Req) => {
     const params = parseParams(req)
-    return await repository.getListPaginate(User, params, EFilterPagination.USER)
+    return await repository.getListPaginate(User, params)
   },
 
   create: async (payload: TCreateUserBody) => {

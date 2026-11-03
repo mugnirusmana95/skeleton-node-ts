@@ -29,7 +29,7 @@ export const errorMiddleware = (
     status,
   }
 
-  console.log('logContext ', logContext)
+  console.error('Error logContext =>>> ', logContext)
 
   if (status >= 500) {
     logger.error(logContext, err.message)

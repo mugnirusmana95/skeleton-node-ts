@@ -35,25 +35,22 @@ export const permissions: TPermissionSeed[] = [
   }
 ]
 
-export const upsertPermissionSeeder = async () => {
+export const insertPermissionSeeder = async () => {
   return await AppDataSource.transaction(async (trx) => {
     for (const item of permissions) {
       console.log('----------------------------------------------')
       console.log('FINDING permission ', item?.code)
       const existing = await repository.findBy(FeatureAction, { field: 'code', value: item.code, withDeleted: true }, trx)
-      if (existing) {
-        console.log('Permission found')
-        console.log('UPDATING exisiting permission')
-        await repository.updateBy(FeatureAction, { field: 'code', value: item.code }, { name: item.name, isActive: item.isActive }, trx)
-        console.log('UPDATED.....')
-      } else {
+      if (!existing) {
         console.log('Permission not found')
         console.log('CREATING new permission')
         await repository.create(FeatureAction, { ...item, isActive: true }, trx)
         console.log('CREATED.....')
+      } else {
+        console.log('Permission found, skipped')
       }
     }
   })
 }
 
-export default upsertPermissionSeeder
+export default insertPermissionSeeder

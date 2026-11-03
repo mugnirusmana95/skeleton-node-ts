@@ -26,25 +26,22 @@ export const roles: TRoleSeed[] = [
   }
 ]
 
-export const upsertRoleSeeder = async () => {
+export const insertRoleSeeder = async () => {
   return await AppDataSource.transaction(async (trx) => {
     for (const item of roles) {
       console.log('----------------------------------------------')
       console.log('FINDING role ', item?.code)
       const result = await repository.findBy(Role, { field: 'code', value: item.code, withDeleted: true }, trx)
-      if (result) {
-        console.log('Role found')
-        console.log('UPDATING exisiting role')
-        await repository.updateBy(Role, { field: 'code', value: item.code }, { name: item.name }, trx)
-        console.log('UPDATED.....')
-      } else {
+      if (!result) {
         console.log('Role not found')
         console.log('CREATING new role')
         await repository.create(Role, { ...item, isActive: true }, trx)
         console.log('CREATED.....')
+      } else {
+        console.log('Role found, skipped...')
       }
     }
   })
 }
 
-export default upsertRoleSeeder
+export default insertRoleSeeder

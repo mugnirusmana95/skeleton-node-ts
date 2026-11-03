@@ -9,12 +9,11 @@ import {
   TUpdateRoleBody,
   TActivationRoleBody
 } from "~/validations/v1/roleValidation"
-import { EFilterPagination } from "~/helpers/paginationHelper"
 
 export default {
   getList: async (req: Req): TResGetListPaginate<Role> => {
     const params = parseParams(req)
-    return await repository.getListPaginate(Role, params, EFilterPagination.ROLE)
+    return await repository.getListPaginate(Role, params)
   },
 
   create: async (payload: TCreateRoleBody): Promise<Role | null> => {

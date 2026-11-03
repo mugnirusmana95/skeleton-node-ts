@@ -7,10 +7,12 @@ import {
   DeleteDateColumn,
   AfterLoad,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  SelectQueryBuilder
 } from 'typeorm'
 import { Role } from './roleEntity'
 import { FeaturePermission } from './featurePermissionEntity'
+import { EStatusDelete, TParsedParams } from '~/helpers/paramHelper'
 
 @Entity({ schema: 'access', name: 'rolePermissions' })
 export class RolePermission {
@@ -58,5 +60,50 @@ export class RolePermission {
     } else {
       this.isDeleted = this.deletedAt ? true : false
     }
+  }
+
+  static filterList(
+    query: SelectQueryBuilder<RolePermission>,
+    params: TParsedParams
+  ): SelectQueryBuilder<RolePermission> {
+    const { statusDelete, search, orderBy } = params
+
+    if (statusDelete === EStatusDelete.WITH || statusDelete === EStatusDelete.ONLY) {
+      query
+        .withDeleted()
+        .addSelect('role.deletedAt')
+    }
+
+    if (statusDelete === EStatusDelete.ONLY) {
+      query.andWhere('role.deletedAt IS NOT NULL')
+    }
+
+    if (search) {
+      query.andWhere(`(role.code ILIKE :search OR role.name ILIKE :search)`, { search: `%${search}%` })
+    }
+
+    if (orderBy && orderBy.length > 0) {
+      for (const item of orderBy) {
+        const columnMap: Record<string, string> = {
+          code: 'role.code',
+          name: 'role.name',
+          createdAt: 'role.createdAt',
+          updatedAt: 'role.updatedAt',
+        }
+
+        const column = columnMap[item.column]
+
+        if (column) {
+          query.addOrderBy(
+            column,
+            item.direction.toUpperCase() as 'ASC' | 'DESC',
+          )
+        }
+      }
+    } else {
+      query.addOrderBy('role.updatedAt', 'DESC')
+    }
+
+    return query
   }
 }
