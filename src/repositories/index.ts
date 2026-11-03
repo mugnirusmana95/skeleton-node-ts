@@ -23,8 +23,8 @@ import entityHelper, {
   TDynamicQueryOptionsGet,
   TStringKey,
 } from '~/helpers/entityHelper'
-import { EStatusDelete, TParsedParams } from '~/helpers/paramHelper'
-import { paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
+import { TParsedParams } from '~/helpers/paramHelper'
+import filterPaginate, { EFilterPagination, paginate, TResGetListPaginate } from '~/helpers/paginationHelper'
 
 export type { TResGetListPaginate } from '~/helpers/paginationHelper'
 export type TResFind<T> = Promise<T | null>
@@ -402,127 +402,29 @@ export const deleteBy = async <T extends ObjectLiteral, K extends TStringKey<T>>
 export const getListPaginate = async <T extends ObjectLiteral>(
   target: EntityTarget<T>,
   params: TParsedParams,
-  options?: TPaginateOptions<T>,
+  type: EFilterPagination,
   trx?: EntityManager
 ): TResGetListPaginate<T> => {
   const alias = getAlias(target, trx)
-  const {
-    page = 1,
-    limit = 10,
-    search = '',
-    orderBy = [],
-    statusDelete,
-  } = params
+  const { page = 1, limit = 10 } = params
 
   const query = getRepo(target, trx).createQueryBuilder(alias)
-
-  if (options?.relations && options.relations.length > 0) {
-    for (const rel of options.relations) {
-      query.leftJoinAndSelect(rel.relation, rel.alias)
-    }
-  }
-
-  const deletedAtCol = getDeletedAtColumn(target, alias, trx)
-  if (statusDelete === EStatusDelete.WITH || statusDelete === EStatusDelete.ONLY) {
-    query.withDeleted().addSelect(deletedAtCol)
-    if (options?.relations) {
-      for (const rel of options.relations) {
-        query.addSelect(`${rel.alias}.deletedAt`)
-      }
-    }
-  }
-
-  if (statusDelete === EStatusDelete.ONLY) {
-    query.andWhere(`${deletedAtCol} IS NOT NULL`)
-  }
-
-  if (search && options?.searchFields && options.searchFields.length > 0) {
-    const searchConditions = options.searchFields
-      .map((col) => `${col} ILIKE :search`)
-      .join(' OR ')
-    query.andWhere(`(${searchConditions})`, { search: `%${search}%` })
-  }
-
-  if (options?.customFilter) {
-    options.customFilter(query)
-  }
-
-  if (orderBy && orderBy.length > 0) {
-    for (const item of orderBy) {
-      const col = options?.columnMap?.[item.column] || `${alias}.${item.column}`
-      query.addOrderBy(col, item.direction.toUpperCase() as 'ASC' | 'DESC')
-    }
-  } else if (options?.defaultOrderBy) {
-    query.addOrderBy(options.defaultOrderBy.column, options.defaultOrderBy.direction)
-  } else {
-    query.addOrderBy(`${alias}.updatedAt`, 'DESC')
-  }
-
-  return paginate(query, { page, limit, statusDelete })
+  await filterPaginate<T>(query, params, type)
+  return paginate(query, { page, limit })
 }
 
-/**
- * Creates a scoped repository instance bound to a specific entity target.
- */
-export const of = <T extends ObjectLiteral>(target: EntityTarget<T>) => ({
-  find: (params: TDynamicQueryOptions, trx?: EntityManager) => find(target, params, trx),
-  get: (params: TDynamicQueryOptionsGet, trx?: EntityManager) => get(target, params, trx),
-  findBy: <K extends TStringKey<T>>(
-    params: TDynamicFieldValueWithSelect<T, K> &
-      TDynamicFieldValueWithAddSelect<T, K> &
-      TDynamicFieldValueWithRelation<T, K> &
-      TDynamicFieldValueWithDeleted<T, K> &
-      TDynamicFieldValueWithGroupBy<T, K>,
-    trx?: EntityManager
-  ) => findBy(target, params, trx),
-  findWhere: (params: TDynamicQueryOptions, trx?: EntityManager) => findWhere(target, params, trx),
-  getBy: <K extends TStringKey<T>>(
-    params: TDynamicFieldValueWithSelect<T, K> &
-      TDynamicFieldValueWithAddSelect<T, K> &
-      TDynamicFieldValueWithRelation<T, K> &
-      TDynamicFieldValueWithDeleted<T, K> &
-      TDynamicFieldValueWithOrderBy<T, K> &
-      TDynamicFieldValueWithGroupBy<T, K>,
-    trx?: EntityManager
-  ) => getBy(target, params, trx),
-  getWhere: (params: TDynamicQueryOptions, trx?: EntityManager) => getWhere(target, params, trx),
-  findByExceptBy: <K extends TStringKey<T>, E extends TStringKey<T>>(
-    findParams: TDynamicFieldValueWithSelect<T, K> &
-      TDynamicFieldValueWithAddSelect<T, K> &
-      TDynamicFieldValueWithRelation<T, K> &
-      TDynamicFieldValueWithDeleted<T, K> &
-      TDynamicFieldValueWithGroupBy<T, K>,
-    exceptParams: TDynamicFieldValue<T, E>,
-    trx?: EntityManager
-  ) => findByExceptBy(target, findParams, exceptParams, trx),
-  getByExceptBy: <K extends TStringKey<T>, E extends TStringKey<T>>(
-    findParams: TDynamicFieldValueWithSelect<T, K> &
-      TDynamicFieldValueWithAddSelect<T, K> &
-      TDynamicFieldValueWithRelation<T, K> &
-      TDynamicFieldValueWithDeleted<T, K> &
-      TDynamicFieldValueWithOrderBy<T, K> &
-      TDynamicFieldValueWithGroupBy<T, K>,
-    exceptParams: TDynamicFieldValue<T, E>,
-    trx?: EntityManager
-  ) => getByExceptBy(target, findParams, exceptParams, trx),
-  create: (data: Partial<T>, trx?: EntityManager) => create(target, data, trx),
-  createMany: (data: Partial<T>[], trx?: EntityManager) => createMany(target, data, trx),
-  update: (params: TDynamicQueryOptions, data: Partial<T>, trx?: EntityManager) =>
-    update(target, params, data, trx),
-  updateBy: <K extends TStringKey<T>>(
-    params: TDynamicFieldValue<T, K>,
-    data: Partial<T>,
-    trx?: EntityManager
-  ) => updateBy(target, params, data, trx),
-  deleted: (params: TDynamicQueryDeleteOptions, trx?: EntityManager) =>
-    deleted(target, params, trx),
-  deleteBy: <K extends TStringKey<T>>(
-    params: TDynamicFieldValueDeleteOption<T, K>,
-    trx?: EntityManager
-  ) => deleteBy(target, params, trx),
-  getListPaginate: (params: TParsedParams, options?: TPaginateOptions<T>, trx?: EntityManager) =>
-    getListPaginate(target, params, options, trx),
-})
+export const getList = async <T extends ObjectLiteral>(
+  target: EntityTarget<T>,
+  params: TParsedParams,
+  type: EFilterPagination,
+  trx?: EntityManager
+): Promise<SelectQueryBuilder<T>> => {
+  const alias = getAlias(target, trx)
+
+  const query = getRepo(target, trx).createQueryBuilder(alias)
+  await filterPaginate<T>(query, params, type)
+  return query
+}
 
 export const repository = {
   find,
@@ -540,7 +442,7 @@ export const repository = {
   deleted,
   deleteBy,
   getListPaginate,
-  of,
+  getList,
 }
 
 export default repository

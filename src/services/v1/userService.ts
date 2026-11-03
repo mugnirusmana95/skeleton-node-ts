@@ -5,9 +5,8 @@ import { EUserStatusEntity, User } from '~/entities/userEntity'
 import { NotFound } from "~/helpers/exceptionHelper"
 import { generateHash, generateRandomText } from "~/helpers/hashHelper"
 
-import { parseParams, TParsedParams } from "~/helpers/paramHelper"
-
-// import profileRepository from "~/repositories/v1/profileRepository"
+import { parseParams } from "~/helpers/paramHelper"
+import { EFilterPagination } from "~/helpers/paginationHelper"
 
 import {
   TCreateUserBody,
@@ -15,19 +14,19 @@ import {
   TChangeStatusUserBody
 } from "~/validations/v1/userValidation"
 
-import repositories from '~/repositories'
+import repository from '~/repositories'
 import { Role } from "~/entities/roleEntity"
 import { Profile } from "~/entities/profileEntity"
 
 export default {
   getList: async (req: Req) => {
     const params = parseParams(req)
-    return await repositories.getListPaginate(User, params)
+    return await repository.getListPaginate(User, params, EFilterPagination.USER)
   },
 
   create: async (payload: TCreateUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const role = await repositories.findBy(Role, {
+      const role = await repository.findBy(Role, {
         field: 'id',
         value: payload.roleId
       }, trx)
@@ -41,14 +40,14 @@ export default {
 
       const hasedPassword = await generateHash(password)
 
-      const dataUser = await repositories.create(User, {
+      const dataUser = await repository.create(User, {
         email: payload.email,
         password: hasedPassword,
         roleId: role.id,
         status: payload.status ?? EUserStatusEntity.INACTIVE,
       }, trx)
 
-      await repositories.create(Profile, {
+      await repository.create(Profile, {
         userId: dataUser.id,
         firstName: payload.firstName,
         middleName: payload.middleName,
@@ -58,7 +57,7 @@ export default {
         address: payload.address,
       }, trx)
 
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: dataUser.id,
         withRelation: [
@@ -73,7 +72,7 @@ export default {
   },
 
   getDetail: async (id: string) => {
-    const user = await repositories.findBy(User, {
+    const user = await repository.findBy(User, {
       field: 'id',
       value: id,
       withRelation: [
@@ -88,13 +87,13 @@ export default {
 
   update: async (id: string, data: TUpdateUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: id
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await repositories.updateBy(User, {
+      await repository.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
@@ -102,7 +101,7 @@ export default {
         roleId: data.roleId,
       }, trx)
 
-      return await repositories.findBy(User, {
+      return await repository.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -115,20 +114,20 @@ export default {
 
   changeStatus: async (id: string, data: TChangeStatusUserBody) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: id
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await repositories.updateBy(User, {
+      await repository.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
         status: data.status,
       }, trx)
 
-      return await repositories.findBy(User, {
+      return await repository.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -141,7 +140,7 @@ export default {
 
   resetPassword: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: id
       }, trx)
@@ -155,14 +154,14 @@ export default {
 
       const hasedPassword = await generateHash(password)
 
-      await repositories.updateBy(User, {
+      await repository.updateBy(User, {
         field: 'id',
         value: user.id
       }, {
         password: hasedPassword,
       }, trx)
 
-      return await repositories.findBy(User, {
+      return await repository.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -175,7 +174,7 @@ export default {
 
   delete: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -185,7 +184,7 @@ export default {
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await repositories.deleteBy(User, {
+      await repository.deleteBy(User, {
         field: 'id',
         value: user.id
       }, trx)
@@ -195,7 +194,7 @@ export default {
   },
 
   getByStatus: async (status: number) => {
-    return await repositories.getBy(User, {
+    return await repository.getBy(User, {
       field: 'status',
       value: status,
       withSelect: ['profile.id', 'user.id', 'role.id'],
@@ -215,7 +214,7 @@ export default {
 
   permanentDelete: async (id: string) => {
     return await AppDataSource.transaction(async (trx) => {
-      const user = await repositories.findBy(User, {
+      const user = await repository.findBy(User, {
         field: 'id',
         value: id,
         withRelation: [
@@ -225,7 +224,7 @@ export default {
       }, trx)
       if (!user) throw new NotFound('User not found')
 
-      await repositories.deleteBy(User, {
+      await repository.deleteBy(User, {
         field: 'id',
         value: user.id,
         permanentDelete: true

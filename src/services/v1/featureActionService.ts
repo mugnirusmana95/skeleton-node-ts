@@ -1,6 +1,7 @@
 import { AppDataSource } from '~/configs/dataSource'
 import { NotFound } from '~/helpers/exceptionHelper'
 import { parseParams } from '~/helpers/paramHelper'
+import { EFilterPagination } from '~/helpers/paginationHelper'
 import repository, { TResGetListPaginate } from '~/repositories'
 import { FeatureAction } from '~/entities/featureActionEntity'
 import { TCreateFeatureActionBody, TUpdateFeatureActionBody } from '~/validations/v1/featureActionValidation'
@@ -8,9 +9,7 @@ import { TCreateFeatureActionBody, TUpdateFeatureActionBody } from '~/validation
 export default {
   getList: async (req: Req): TResGetListPaginate<FeatureAction> => {
     const params = parseParams(req)
-    return await repository.getListPaginate(FeatureAction, params, {
-      searchFields: ['featureAction.code', 'featureAction.name'],
-    })
+    return await repository.getListPaginate(FeatureAction, params, EFilterPagination.ROLE)
   },
 
   create: async (payload: TCreateFeatureActionBody): Promise<FeatureAction | null> => {
