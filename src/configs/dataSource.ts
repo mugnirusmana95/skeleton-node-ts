@@ -1,9 +1,21 @@
 import 'reflect-metadata'
-import { DataSource } from 'typeorm'
 import dotenv from 'dotenv'
 import '~/helpers/queryBuilderHelper'
+import path from 'node:path'
+import { DataSource } from 'typeorm'
 
 dotenv.config()
+
+const getPath = (dir: string) => {
+  const fullPath = path.join(
+    __dirname,
+    `../${dir}`,
+    process.env.NODE_ENV === 'production'
+      ? '**/*.js'
+      : '**/*.ts'
+  )
+  return fullPath
+}
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -14,6 +26,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'db_express_typeorm',
   synchronize: false,
   logging: false,
-  entities: [__dirname + '/../entities/**/*.ts'],
-  migrations: [__dirname + '/../migrations/**/*.ts'],
+  entities: [getPath('entities')],
+  migrations: [getPath('migrations')],
 })

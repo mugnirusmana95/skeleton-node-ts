@@ -16,6 +16,8 @@ import {
 import repository from '~/repositories'
 import { Role } from "~/entities/roleEntity"
 import { Profile } from "~/entities/profileEntity"
+import { SendEmailQueue } from "~/queues/sendEmailQueue"
+import { EStatusJob, JobQueue } from "~/entities/jobQueueEntity"
 
 export default {
   getList: async (req: Req) => {
@@ -99,6 +101,24 @@ export default {
         email: data.email,
         roleId: data.roleId,
       }, trx)
+
+      await repository.updateBy(Profile, {
+        field: 'userId',
+        value: user.id
+      }, {
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+        phoneCode: data.phoneCode,
+        phoneNumber: data.phoneNumber,
+        address: data.address
+      }, trx)
+
+      await SendEmailQueue.dispatch({
+        to: user.email,
+        message: 'Attempt to login',
+        subject: 'Login'
+      })
 
       return await repository.findBy(User, {
         field: 'id',

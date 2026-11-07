@@ -51,7 +51,7 @@ export const insertFeaturePermissionSeeder = async () => {
       }
 
       console.log('FINDING Feature Access Feature Permission')
-      const result = await repository.findWhere(FeaturePermission, {
+      const result = await repository.find(FeaturePermission, {
         where: {
           condition: 'featurePermission.featureId = :featureId AND featurePermission.featureActionId = :permissionId',
           value: { featureId, permissionId },

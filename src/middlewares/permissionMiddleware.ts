@@ -10,7 +10,7 @@ export const permissionMiddleware = (
   permissionValue: string | string[],
   type: PermissionType = 'permission'
 ) => {
-  return async (req: Req, res: Res, next: Next) => {
+  return async (req: Req, _res: Res, next: Next) => {
     const authorization = req.cookies.token
 
     if (!authorization || !req.auth?.userId) throw new Unauthorized('Authentication is required. Please login first.')

@@ -47,9 +47,9 @@ const getAlias = <T extends ObjectLiteral>(
   target: EntityTarget<T>,
   trx?: EntityManager
 ): string => {
-  const metadata = getRepo(target, trx).metadata
-  const name = metadata.targetName || metadata.tableName
-  return name[0].toLowerCase() + name.slice(1)
+  const metadata = getRepo(target, trx)?.metadata
+  const name = metadata?.targetName || metadata?.tableName
+  return name?.[0]?.toLowerCase() + name?.slice(1)
 }
 
 const getDeletedAtColumn = <T extends ObjectLiteral>(
@@ -114,7 +114,6 @@ export const findBy = async <T extends ObjectLiteral, K extends TStringKey<T>>(
 ): Promise<T | null> => {
   const alias = getAlias(target, trx)
   const { field, value, withSelect, withAddSelect, withRelation, withDeleted, withGroupBy } = params
-
   const query = getRepo(target, trx).createQueryBuilder(alias)
 
   entityHelper.select(query, withSelect)
@@ -124,25 +123,6 @@ export const findBy = async <T extends ObjectLiteral, K extends TStringKey<T>>(
   entityHelper.groupBy(query, withGroupBy)
 
   query.where(`${alias}.${String(field)} = :value`, { value })
-
-  return query.getOne()
-}
-
-export const findWhere = async <T extends ObjectLiteral>(
-  target: EntityTarget<T>,
-  params: TDynamicQueryOptions,
-  trx?: EntityManager
-): Promise<T | null> => {
-  const alias = getAlias(target, trx)
-  const { where, withSelect, withAddSelect, withRelation, withDeleted } = params
-
-  const query = getRepo(target, trx).createQueryBuilder(alias)
-
-  entityHelper.select(query, withSelect)
-  entityHelper.addSelect(query, withAddSelect)
-  entityHelper.with(query, withRelation, withDeleted, !!withSelect)
-  entityHelper.withDeleted(query, getDeletedAtColumn(target, alias, trx), withDeleted)
-  entityHelper.condition(query, where)
 
   return query.getOne()
 }
@@ -170,25 +150,6 @@ export const getBy = async <T extends ObjectLiteral, K extends TStringKey<T>>(
   entityHelper.groupBy(query, withGroupBy)
 
   query.where(`${alias}.${String(field)} = :value`, { value })
-
-  return query.getMany()
-}
-
-export const getWhere = async <T extends ObjectLiteral>(
-  target: EntityTarget<T>,
-  params: TDynamicQueryOptions,
-  trx?: EntityManager
-): Promise<T[]> => {
-  const alias = getAlias(target, trx)
-  const { where, withSelect, withAddSelect, withRelation, withDeleted } = params
-
-  const query = getRepo(target, trx).createQueryBuilder(alias)
-
-  entityHelper.select(query, withSelect)
-  entityHelper.addSelect(query, withAddSelect)
-  entityHelper.with(query, withRelation, withDeleted, !!withSelect)
-  entityHelper.withDeleted(query, getDeletedAtColumn(target, alias, trx), withDeleted)
-  entityHelper.condition(query, where)
 
   return query.getMany()
 }
@@ -428,9 +389,7 @@ export const repository = {
   find,
   get,
   findBy,
-  findWhere,
   getBy,
-  getWhere,
   findByExceptBy,
   getByExceptBy,
   create,

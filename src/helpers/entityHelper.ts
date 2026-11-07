@@ -10,11 +10,11 @@ type TArrayRelationType =
   | null
   | undefined
 
-export type TStringKey<T> = Extract<keyof T, string>
+export type TStringKey<T> = Extract<keyof T, string | number>
 
 export type TDynamicCondition = {
   condition: string
-  value?: Record<string, unknown>
+  value?: Record<string | number, unknown>
 }
 
 export type TDynamicOrderBy = {
