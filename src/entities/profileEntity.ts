@@ -34,12 +34,10 @@ export class Profile {
   fullName?: string | null
 
   @Column({ type: 'varchar' })
-  phoneCode?: string
+  phoneCodeId?: string
 
   @Column({ type: 'varchar' })
   phoneNumber?: string
-
-  fullPhone?: string | null
 
   @Column({ type: 'varchar' })
   address?: string
@@ -74,21 +72,6 @@ export class Profile {
       this.fullName = [this.firstName, this.middleName, this.lastName]
         .filter((name) => name?.trim())
         .join(' ')
-    }
-  }
-
-  @AfterLoad()
-  computeFullPhone() {
-    if (!this.phoneCode && !this.phoneNumber) {
-      this.fullPhone = null
-    } else {
-      const phone = this.phoneCode && this.phoneNumber
-        ? [this.phoneCode, this.phoneNumber]
-        : []
-
-      this.fullPhone = phone
-        .filter((value) => value?.trim())
-        .join('')
     }
   }
 
@@ -134,7 +117,6 @@ export class Profile {
           firstName: 'profile.firstName',
           middleName: 'profile.middleName',
           lastName: 'profile.lastName',
-          phoneCode: 'profile.phoneCode',
           phoneNumber: 'profile.phoneNumber',
           userEmail: 'user.email',
           createdAt: 'profile.createdAt',

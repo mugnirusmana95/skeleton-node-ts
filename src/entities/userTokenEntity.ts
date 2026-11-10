@@ -112,7 +112,6 @@ export class UserToken {
           firstName: 'userToken.firstName',
           middleName: 'userToken.middleName',
           lastName: 'userToken.lastName',
-          phoneCode: 'userToken.phoneCode',
           phoneNumber: 'userToken.phoneNumber',
           userEmail: 'user.email',
           createdAt: 'userToken.createdAt',

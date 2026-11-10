@@ -8,6 +8,7 @@ import repository from '~/repositories'
 import { User } from '~/entities/userEntity'
 import { Role } from '~/entities/roleEntity'
 import { Profile } from '~/entities/profileEntity'
+import { PhoneCode } from '~/entities/phoneCodeEntity'
 
 export type TListUserQuery = z.infer<typeof listUserSchema>
 export type TCreateUserBody = z.infer<typeof createUserSchema>
@@ -113,7 +114,7 @@ const createUserSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  phoneCode: z
+  phoneCodeId: z
     .string('Phone code is required')
     .min(2, 'Phone code minimum 2 characters')
     .max(100, 'Phone code maximum 100 characters')
@@ -134,7 +135,7 @@ const createUserSchema = z.object({
     .optional()
     .or(z.literal(''))
 }).superRefine(async (data, ctx) => {
-  const { email, roleId, firstName, phoneCode, phoneNumber } = data
+  const { email, roleId, firstName, phoneCodeId, phoneNumber } = data
 
   const existingEmail = await repository.findBy(
     User,
@@ -172,13 +173,28 @@ const createUserSchema = z.object({
     })
   }
 
-  if (phoneCode && !phoneNumber) {
+  if (phoneCodeId) {
+    const existPhoneCode = await repository.findBy(
+      PhoneCode,
+      { field: 'id', value: phoneCodeId },
+    )
+
+    if (!existPhoneCode) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['phoneCodeId'],
+        message: 'Phone code does not exist',
+      })
+    }
+  }
+
+  if (phoneCodeId && !phoneNumber) {
     ctx.addIssue({
       code: 'custom',
       path: ['phoneNumber'],
       message: 'Phone number is required if phone code is filled',
     })
-  } else if (!phoneCode && phoneNumber) {
+  } else if (!phoneCodeId && phoneNumber) {
     ctx.addIssue({
       code: 'custom',
       path: ['phoneCode'],
@@ -241,7 +257,7 @@ const updateUserSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  phoneCode: z
+  phoneCodeId: z
     .string('Phone code is required')
     .min(2, 'Phone code is required')
     .max(100, 'Phone code maximum 50 characters')
@@ -262,16 +278,16 @@ const updateUserSchema = z.object({
     .optional()
     .or(z.literal(''))
 }).superRefine(async (data, ctx) => {
-  const { id, email, roleId, firstName, phoneCode, phoneNumber } = data
+  const { id, email, roleId, firstName, phoneCodeId, phoneNumber } = data
 
   if (email) {
-    const existingEmail = await repository.findByExceptBy(
+    const uniqueEmail = await repository.findByExceptBy(
       User,
       { field: 'email', value: email, withDeleted: true },
       { field: 'id', value: id }
     )
 
-    if (existingEmail) {
+    if (uniqueEmail) {
       ctx.addIssue({
         code: 'custom',
         path: ['email'],
@@ -281,12 +297,12 @@ const updateUserSchema = z.object({
   }
 
   if (roleId) {
-    const existingRole = await repository.findBy(
+    const existRole = await repository.findBy(
       Role,
       { field: 'id', value: roleId },
     )
 
-    if (!existingRole) {
+    if (!existRole) {
       ctx.addIssue({
         code: 'custom',
         path: ['role'],
@@ -303,34 +319,49 @@ const updateUserSchema = z.object({
     })
   }
 
-  if (phoneCode && !phoneNumber) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['phoneNumber'],
-      message: 'Phone number is required if phone code is filled',
-    })
-  } else if (!phoneCode && phoneNumber) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['phoneCode'],
-      message: 'Phone code is required if phone number is filled',
-    })
+  if (phoneCodeId) {
+    const existPhoneCode = await repository.findBy(
+      PhoneCode,
+      { field: 'id', value: phoneCodeId },
+    )
+
+    if (!existPhoneCode) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['phoneCodeId'],
+        message: 'Phone code does not exist',
+      })
+    }
   }
 
   if (phoneNumber) {
-    const existingPhoneNumber = await repository.findByExceptBy(
+    const uniquePhoneNumber = await repository.findByExceptBy(
       Profile,
       { field: 'phoneNumber', value: phoneNumber, withDeleted: true },
       { field: 'userId', value: id }
     )
 
-    if (existingPhoneNumber) {
+    if (uniquePhoneNumber) {
       ctx.addIssue({
         code: 'custom',
         path: ['phoneNumber'],
         message: 'Phone number already exist',
       })
     }
+  }
+
+  if (phoneCodeId && !phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneNumber'],
+      message: 'Phone number is required if phone code is filled',
+    })
+  } else if (!phoneCodeId && phoneNumber) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['phoneCodeId'],
+      message: 'Phone code is required if phone number is filled',
+    })
   }
 })
 

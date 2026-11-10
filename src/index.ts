@@ -7,6 +7,7 @@ import { AppDataSource } from '~/configs/dataSource'
 
 import { errorMiddleware } from '~/middlewares/errorMiddleware'
 import { languageMiddleware } from './middlewares/languageMiddleware'
+import { routeNotFoundMiddleware } from './middlewares/routeNotFoundMiddleware'
 import { timezoneMiddleware } from './middlewares/timezoneMiddleware'
 
 import routesV1 from '~/routes/v1'
@@ -32,6 +33,7 @@ app.use(timezoneMiddleware)
 
 app.use('/api/v1', routesV1)
 
+app.use(routeNotFoundMiddleware)
 app.use(errorMiddleware)
 
 if (!MODE || !MODE_ALLOWED.includes(MODE)) {

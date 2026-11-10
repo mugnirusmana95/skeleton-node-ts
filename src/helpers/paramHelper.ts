@@ -1,9 +1,11 @@
+import moment from "moment"
+
 export type TParamsPage = number | undefined
 
 export const ALLOWED_LIMITS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const
 export type TParamsLimit = (typeof ALLOWED_LIMITS)[number] | undefined
 
-type TOrderDirectionType = 'ASC' | 'DESC'
+export type TOrderDirectionType = 'ASC' | 'DESC'
 export type TOrderByItem = {
   column: string
   direction: TOrderDirectionType
@@ -20,10 +22,18 @@ export type TParsedParams = {
   search?: string | undefined
   orderBy: TOrderByItem[]
   statusDelete?: EStatusDelete
-  date?: string | undefined
-  startDate?: string | undefined
-  endDate?: string | undefined
+  code?: string | number | undefined
+  isActive?: boolean | undefined
+  date?: Date | undefined
+  startDate?: Date | undefined
+  endDate?: Date | undefined
   roleId?: string | undefined
+  countryId?: string | undefined
+  provinceId?: string | undefined
+  regencyId?: string | undefined
+  districtId?: string | undefined
+  villageId?: string | undefined
+  zipCodeId?: string | undefined
   userId?: string | undefined
 }
 
@@ -98,19 +108,78 @@ export const parseParams = (req: Req): TParsedParams => {
 
   const statusDelete = parseStatusDelete(q.statusDelete)
 
-  const date = typeof q.date === 'string' && q.date ? q.date : undefined
+  const code =
+    q.code
+      ? typeof q.code === 'string'
+        ? String(q.code)
+        : typeof q.code === 'number'
+          ? Number(q.code)
+          : undefined
+      : undefined
+
+  const isActive =
+    q.isActive
+      ? String(q.isActive).toLowerCase() === "true"
+        ? true
+        : String(q.isActive).toLowerCase() === "false"
+          ? false
+          : undefined
+      : undefined
+
+  const date =
+    q.date && moment(String(q.date)).isValid()
+      ? moment(String(q.date)).toDate()
+      : undefined
 
   const startDate =
-    typeof q.startDate === 'string' && q.startDate ? q.startDate : undefined
+    q.startDate && moment(String(q.startDate)).isValid()
+      ? moment(String(q.startDate)).toDate()
+      : undefined
 
   const endDate =
-    typeof q.endDate === 'string' && q.endDate ? q.endDate : undefined
+    q.endDate && moment(String(q.endDate)).isValid()
+      ? moment(String(q.endDate)).toDate()
+      : undefined
 
   const roleId =
-    typeof q.roleId === 'string' && q.roleId ? q.roleId : undefined
+    q.roleId && typeof q.roleId === 'string'
+      ? q.roleId
+      : undefined
 
   const userId =
-    typeof q.userId === 'string' && q.userId ? q.userId : undefined
+    q.userId && typeof q.userId === 'string'
+      ? q.userId
+      : undefined
+
+  const countryId =
+    q.countryId && typeof q.countryId === 'string'
+      ? q.countryId
+      : undefined
+
+  const provinceId =
+    q.provinceId && typeof q.provinceId === 'string'
+      ? q.provinceId
+      : undefined
+
+  const regencyId =
+    q.regencyId && typeof q.regencyId === 'string'
+      ? q.regencyId
+      : undefined
+
+  const districtId =
+    q.districtId && typeof q.districtId === 'string'
+      ? q.districtId
+      : undefined
+
+  const villageId =
+    q.villageId && typeof q.villageId === 'string'
+      ? q.villageId
+      : undefined
+
+  const zipCodeId =
+    q.zipCodeId && typeof q.zipCodeId === 'string'
+      ? q.zipCodeId
+      : undefined
 
   return {
     page,
@@ -118,10 +187,18 @@ export const parseParams = (req: Req): TParsedParams => {
     search,
     orderBy,
     statusDelete,
+    code,
+    isActive,
     date,
     startDate,
     endDate,
     roleId,
-    userId
+    userId,
+    countryId,
+    provinceId,
+    regencyId,
+    districtId,
+    villageId,
+    zipCodeId
   }
 }

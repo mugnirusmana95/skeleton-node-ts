@@ -43,7 +43,7 @@ type TArrayAddSelectType =
   | undefined
 
 export type TDynamicQueryOptions = {
-  where: TDynamicCondition
+  where?: TDynamicCondition
   withSelect?: TArraySelectType
   withAddSelect?: TArrayAddSelectType
   withRelation?: TArrayRelationType
@@ -182,9 +182,13 @@ export default {
 
   condition: <T extends ObjectLiteral>(
     query: SelectQueryBuilder<T>,
-    where: TDynamicCondition,
+    where?: TDynamicCondition,
   ): SelectQueryBuilder<T> => {
-    return query.andWhere(where.condition, where.value ?? {})
+    if (where) {
+      return query.andWhere(where.condition, where.value ?? {})
+    }
+
+    return query
   },
 
   orderBy: <T extends ObjectLiteral>(

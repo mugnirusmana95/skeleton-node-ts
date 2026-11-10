@@ -7,14 +7,7 @@ import { DataSource } from 'typeorm'
 dotenv.config()
 
 const getPath = (dir: string) => {
-  const fullPath = path.join(
-    __dirname,
-    `../${dir}`,
-    process.env.NODE_ENV === 'production'
-      ? '**/*.js'
-      : '**/*.ts'
-  )
-  return fullPath
+  return path.join(__dirname, `../${dir}`, '**/*.{js,ts}')
 }
 
 export const AppDataSource = new DataSource({

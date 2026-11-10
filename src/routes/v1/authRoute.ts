@@ -13,7 +13,6 @@ const app = express()
 
 app.post(
   '/login',
-  unAuthMiddleware,
   validate(authValidation.loginAuthSchema),
   authController.login
 )

@@ -64,7 +64,8 @@ export const insertFeaturePermissionSeeder = async () => {
         console.log('CREATING Feature Access')
         await repository.create(FeaturePermission, {
           featureActionId: permissionId,
-          featureId: featureId
+          featureId: featureId,
+          isActive,
         }, trx)
         console.log('CREATED Feature Access.....')
       } else {
@@ -73,5 +74,3 @@ export const insertFeaturePermissionSeeder = async () => {
     }
   })
 }
-
-export default insertFeaturePermissionSeeder

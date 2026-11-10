@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateFeatureActionTable1792057097366 implements MigrationInterface {
     name = 'CreateFeatureActionTable1792057097366'
-    tableSchema = 'access'
+    tableSchema = 'master'
     tableName = 'featureActions'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

@@ -43,5 +43,3 @@ export const insertRoleSeeder = async () => {
     }
   })
 }
-
-export default insertRoleSeeder

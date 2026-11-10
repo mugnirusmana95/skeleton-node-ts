@@ -24,7 +24,7 @@ export class CreateUserTable1791445345704 implements MigrationInterface {
                     UNIQUE ("email"),
                 CONSTRAINT "FK_${this.tableName}_roles_roleId"
                     FOREIGN KEY ("roleId") 
-                    REFERENCES "public"."roles"("id")
+                    REFERENCES "master"."roles"("id")
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
             )`)

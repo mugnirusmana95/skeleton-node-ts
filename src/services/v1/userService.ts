@@ -53,7 +53,7 @@ export default {
         firstName: payload.firstName,
         middleName: payload.middleName,
         lastName: payload.lastName,
-        phoneCode: payload.phoneCode,
+        phoneCodeId: payload.phoneCodeId,
         phoneNumber: payload.phoneNumber,
         address: payload.address,
       }, trx)
@@ -109,7 +109,7 @@ export default {
         firstName: data.firstName,
         middleName: data.middleName,
         lastName: data.lastName,
-        phoneCode: data.phoneCode,
+        phoneCodeId: data.phoneCodeId,
         phoneNumber: data.phoneNumber,
         address: data.address
       }, trx)

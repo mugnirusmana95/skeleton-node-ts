@@ -128,7 +128,6 @@ export class User {
         profile.firstName ILIKE :search OR
         profile.middleName ILIKE :search OR
         profile.lastName ILIKE :search OR
-        profile.phoneCode ILIKE :search OR
         profile.phoneNumber ILIKE :search
       )`,
         { search: `%${search}%` })

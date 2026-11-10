@@ -2,10 +2,12 @@ import { MigrationInterface, QueryRunner } from "typeorm"
 
 export class CreateRoleTable1791445189808 implements MigrationInterface {
     name = 'CreateRoleTable1791445189808'
-    tableSchema = 'public'
+    tableSchema = 'master'
     tableName = 'roles'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "${this.tableSchema}"`)
+
         await queryRunner.query(`
             CREATE TABLE "${this.tableSchema}"."${this.tableName}" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),

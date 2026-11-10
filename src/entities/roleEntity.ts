@@ -14,7 +14,7 @@ import { RolePermission } from './rolePermissionEntity'
 import { SelectQueryBuilder } from 'typeorm/browser'
 import { EStatusDelete, TParsedParams } from '~/helpers/paramHelper'
 
-@Entity({ schema: 'public', name: 'roles' })
+@Entity({ schema: 'master', name: 'roles' })
 export class Role {
   @PrimaryGeneratedColumn("uuid")
   id!: string

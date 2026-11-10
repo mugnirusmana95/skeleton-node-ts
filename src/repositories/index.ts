@@ -103,6 +103,33 @@ export const get = async <T extends ObjectLiteral>(
   return query.getMany()
 }
 
+export const count = async <T extends ObjectLiteral>(
+  target: EntityTarget<T>,
+  params: TDynamicQueryOptions,
+  trx?: EntityManager
+): Promise<number> => {
+  const alias = getAlias(target, trx)
+  const {
+    where,
+    withRelation,
+    withDeleted,
+    withGroupBy,
+  } = params
+
+  const query = getRepo(target, trx).createQueryBuilder(alias)
+
+  entityHelper.with(query, withRelation, withDeleted)
+  entityHelper.withDeleted(
+    query,
+    getDeletedAtColumn(target, alias, trx),
+    withDeleted
+  )
+  entityHelper.condition(query, where)
+  entityHelper.groupBy(query, withGroupBy)
+
+  return query.getCount()
+}
+
 export const findBy = async <T extends ObjectLiteral, K extends TStringKey<T>>(
   target: EntityTarget<T>,
   params: TDynamicFieldValueWithSelect<T, K> &
@@ -152,6 +179,40 @@ export const getBy = async <T extends ObjectLiteral, K extends TStringKey<T>>(
   query.where(`${alias}.${String(field)} = :value`, { value })
 
   return query.getMany()
+}
+
+export const countBy = async <
+  T extends ObjectLiteral,
+  K extends TStringKey<T>
+>(
+  target: EntityTarget<T>,
+  params: TDynamicFieldValueWithRelation<T, K> &
+    TDynamicFieldValueWithDeleted<T, K> &
+    TDynamicFieldValueWithGroupBy<T, K>,
+  trx?: EntityManager
+): Promise<number> => {
+  const alias = getAlias(target, trx)
+  const {
+    field,
+    value,
+    withRelation,
+    withDeleted,
+    withGroupBy,
+  } = params
+
+  const query = getRepo(target, trx).createQueryBuilder(alias)
+
+  entityHelper.with(query, withRelation, withDeleted)
+  entityHelper.withDeleted(
+    query,
+    getDeletedAtColumn(target, alias, trx),
+    withDeleted
+  )
+  entityHelper.groupBy(query, withGroupBy)
+
+  query.where(`${alias}.${String(field)} = :value`, { value })
+
+  return query.getCount()
 }
 
 export const findByExceptBy = async <
@@ -388,8 +449,10 @@ export const getList = async <T extends ObjectLiteral>(
 export const repository = {
   find,
   get,
+  count,
   findBy,
   getBy,
+  countBy,
   findByExceptBy,
   getByExceptBy,
   create,

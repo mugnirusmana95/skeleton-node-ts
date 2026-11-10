@@ -35,5 +35,3 @@ export const insertFeatureSeeder = async () => {
     }
   })
 }
-
-export default insertFeatureSeeder

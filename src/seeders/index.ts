@@ -7,6 +7,8 @@ import { insertFeatureSeeder } from '~/seeders/insertFeatureSeeder'
 import { insertPermissionSeeder } from '~/seeders/insertPermissionSeeder'
 import { insertFeaturePermissionSeeder } from '~/seeders/insertFeaturePermissionSeeder'
 import { insertUserSeeder } from '~/seeders/insertUserSeeder'
+import { insertCountryAndPhoneCodesSeeder } from './insertCountryAndPhoneCodesSeeder'
+import { insertIndonesianRegionalSeeder } from '~/seeders/insertIndonesianRegionalSeeder'
 
 dotenv.config()
 
@@ -15,46 +17,54 @@ export const runSeeders = async () => {
 
   try {
     if (!AppDataSource.isInitialized) {
-      console.log('🔄 Menginisialisasi koneksi database...')
+      console.log('🔄 Initializing database connection...')
       await AppDataSource.initialize()
-      console.log('✅ Koneksi database berhasil.\n')
+      console.log('✅ Database connection successful.\n')
     }
 
     console.log('====================================')
-    console.log('🌱 MEMULAI PROSES DATABASE SEEDING')
+    console.log('🌱 STARTING THE DATABASE SEEDING PROCESS')
     console.log('====================================\n')
 
-    console.log('[1]. Menjalankan insertRoleSeeder...')
+    console.log('[1]. Seeding insertRoleSeeder...')
     await insertRoleSeeder()
-    console.log('✅ insertRoleSeeder selesai.\n')
+    console.log('✅ insertRoleSeeder finish.\n')
 
-    console.log('[2]. Menjalankan insertFeatureSeeder...')
+    console.log('[2]. Seeding insertFeatureSeeder...')
     await insertFeatureSeeder()
-    console.log('✅ insertFeatureSeeder selesai.\n')
+    console.log('✅ insertFeatureSeeder finish.\n')
 
-    console.log('[3]. Menjalankan insertPermissionSeeder...')
+    console.log('[3]. Seeding insertPermissionSeeder...')
     await insertPermissionSeeder()
-    console.log('✅ insertPermissionSeeder selesai.\n')
+    console.log('✅ insertPermissionSeeder finish.\n')
 
-    console.log('[4]. Menjalankan UpsertFeaturePermission...')
+    console.log('[4]. Seeding UpsertFeaturePermission...')
     await insertFeaturePermissionSeeder()
-    console.log('✅ UpsertFeaturePermission selesai.\n')
+    console.log('✅ UpsertFeaturePermission finish.\n')
 
-    console.log('[5]. Menjalankan insertUserSeeder...')
+    console.log('[5]. Seeding insertUserSeeder...')
     await insertUserSeeder()
-    console.log('✅ insertUserSeeder selesai.\n')
+    console.log('✅ insertUserSeeder finish.\n')
+
+    console.log('[6]. Seeding insertCountryAndPhoneCodesSeeder...')
+    await insertCountryAndPhoneCodesSeeder()
+    console.log('✅ insertCountryAndPhoneCodesSeeder finish.\n')
+
+    console.log('[7]. Seeding insertIndonesianRegionalSeeder...')
+    await insertIndonesianRegionalSeeder()
+    console.log('✅ insertIndonesianRegionalSeeder finish.\n')
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
     console.log('====================================')
     console.log(`🎉 SEMUA SEEDER SELESAI DALAM ${duration}s`)
     console.log('====================================\n')
   } catch (error) {
-    console.error('\n❌ Terjadi kesalahan saat menjalankan seeder:', error)
+    console.error('\n❌ An error occurred while running the seeder.:', error)
     throw error
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy()
-      console.log('🔒 Koneksi database ditutup.')
+      console.log('🔒 Database connection closed.')
     }
   }
 }

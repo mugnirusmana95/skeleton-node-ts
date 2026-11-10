@@ -52,5 +52,3 @@ export const insertPermissionSeeder = async () => {
     }
   })
 }
-
-export default insertPermissionSeeder

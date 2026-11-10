@@ -6,6 +6,8 @@ export class CreateFeaturePermissionTable1792057166072 implements MigrationInter
     tableName = 'featurePermissions'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "${this.tableSchema}"`)
+
         await queryRunner.query(`
             CREATE TABLE "${this.tableSchema}"."${this.tableName}" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -23,12 +25,12 @@ export class CreateFeaturePermissionTable1792057166072 implements MigrationInter
                     UNIQUE ("featureId", "featureActionId"),
                 CONSTRAINT "FK_${this.tableName}_features_featureId"
                     FOREIGN KEY ("featureId") 
-                    REFERENCES "access"."features"("id")
+                    REFERENCES "master"."features"("id")
                     ON DELETE CASCADE
                     ON UPDATE CASCADE,
                 CONSTRAINT "FK_${this.tableName}_featureActions_featureActionId"
                     FOREIGN KEY ("featureActionId") 
-                    REFERENCES "access"."featureActions"("id")
+                    REFERENCES "master"."featureActions"("id")
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
             )`)

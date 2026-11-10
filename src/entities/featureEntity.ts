@@ -13,7 +13,7 @@ import {
 import { FeaturePermission } from '~/entities/featurePermissionEntity'
 import { EStatusDelete, TParsedParams } from '~/helpers/paramHelper'
 
-@Entity({ schema: 'access', name: 'features' })
+@Entity({ schema: 'master', name: 'features' })
 export class Feature {
   @PrimaryGeneratedColumn("uuid")
   id!: string

@@ -2,12 +2,10 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateFeatureTable1792057050493 implements MigrationInterface {
     name = 'CreateFeatureTable1792057050493'
-    tableSchema = 'access'
+    tableSchema = 'master'
     tableName = 'features'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "${this.tableSchema}"`)
-
         await queryRunner.query(`
             CREATE TABLE "${this.tableSchema}"."${this.tableName}" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),

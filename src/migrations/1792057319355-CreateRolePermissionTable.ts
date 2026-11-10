@@ -23,7 +23,7 @@ export class CreateRolePermissionTable1792057319355 implements MigrationInterfac
                     UNIQUE ("roleId", "featurePermissionId"),
                 CONSTRAINT "FK_${this.tableName}_roles_roleId"
                     FOREIGN KEY ("roleId") 
-                    REFERENCES "public"."roles"("id")
+                    REFERENCES "master"."roles"("id")
                     ON DELETE CASCADE
                     ON UPDATE CASCADE,
                 CONSTRAINT "FK_${this.tableName}_featurePermissions_featurePermissionId"
