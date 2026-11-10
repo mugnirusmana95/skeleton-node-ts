@@ -35,41 +35,46 @@ const mergeFeaturePermission = async (): Promise<TFeaturePermissionSeed[]> => {
 export const insertFeaturePermissionSeeder = async () => {
   return AppDataSource.transaction(async (trx) => {
     const data = await mergeFeaturePermission()
-    for (const item of data) {
-      console.log('----------------------------------------------')
-      const { featureCode, featureId, permissionCode, permissionId, isActive } = item
-      console.log('FINDING Feature Permission ', featureCode, permissionCode)
-      if (!featureId || !permissionId) {
-        if (!featureId && permissionId) {
-          console.log('Feature not found, skipped...')
-        } else if (featureId && !permissionId) {
-          console.log('Permission not found, skipped...')
-        } else if (!featureId && !permissionId) {
-          console.log('Feature and Permission not found, skipped...')
+    const totalFeaturePermission = await repository.count(FeaturePermission, { withDeleted: true }, trx)
+    if (totalFeaturePermission >= data.length) {
+      console.log(`${totalFeaturePermission} Feature Permissions already seeded, skipped...`)
+    } else {
+      for (const item of data) {
+        console.log('----------------------------------------------')
+        const { featureCode, featureId, permissionCode, permissionId, isActive } = item
+        console.log('FINDING Feature Permission ', featureCode, permissionCode)
+        if (!featureId || !permissionId) {
+          if (!featureId && permissionId) {
+            console.log('Feature not found, skipped...')
+          } else if (featureId && !permissionId) {
+            console.log('Permission not found, skipped...')
+          } else if (!featureId && !permissionId) {
+            console.log('Feature and Permission not found, skipped...')
+          }
+          continue
         }
-        continue
-      }
 
-      console.log('FINDING Feature Access Feature Permission')
-      const result = await repository.find(FeaturePermission, {
-        where: {
-          condition: 'featurePermission.featureId = :featureId AND featurePermission.featureActionId = :permissionId',
-          value: { featureId, permissionId },
-        },
-        withDeleted: true,
-      }, trx)
-
-      if (!result) {
-        console.log('Feature Access not found')
-        console.log('CREATING Feature Access')
-        await repository.create(FeaturePermission, {
-          featureActionId: permissionId,
-          featureId: featureId,
-          isActive,
+        console.log('FINDING Feature Access Feature Permission')
+        const result = await repository.find(FeaturePermission, {
+          where: {
+            condition: 'featurePermission.featureId = :featureId AND featurePermission.featureActionId = :permissionId',
+            value: { featureId, permissionId },
+          },
+          withDeleted: true,
         }, trx)
-        console.log('CREATED Feature Access.....')
-      } else {
-        console.log('Feature Access found, skipped...')
+
+        if (!result) {
+          console.log('Feature Access not found')
+          console.log('CREATING Feature Access')
+          await repository.create(FeaturePermission, {
+            featureActionId: permissionId,
+            featureId: featureId,
+            isActive,
+          }, trx)
+          console.log('CREATED Feature Access.....')
+        } else {
+          console.log('Feature Access found, skipped...')
+        }
       }
     }
   })

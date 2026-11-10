@@ -1,0 +1,26 @@
+[
+  {
+    "code": "index",
+    "name": "List Data"
+  },
+  {
+    "code": "create",
+    "name": "Create Data"
+  },
+  {
+    "code": "view",
+    "name": "View Data"
+  },
+  {
+    "code": "edit",
+    "name": "Edit Data"
+  },
+  {
+    "code": "update",
+    "name": "Update Data"
+  },
+  {
+    "code": "delete",
+    "name": "Delete Data"
+  }
+]

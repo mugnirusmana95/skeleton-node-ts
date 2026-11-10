@@ -1,6 +1,9 @@
 import { AppDataSource } from '~/configs/dataSource'
 import { FeatureAction } from '~/entities/featureActionEntity'
+
 import repository from '~/repositories'
+
+import dataPermission from '~/seeders/data/permissions.json'
 
 export type TPermissionSeed = {
   code: string
@@ -8,46 +11,26 @@ export type TPermissionSeed = {
   isActive?: boolean
 }
 
-export const permissions: TPermissionSeed[] = [
-  {
-    code: 'index',
-    name: 'List Data'
-  },
-  {
-    code: 'create',
-    name: 'Create Data'
-  },
-  {
-    code: 'view',
-    name: 'View Data'
-  },
-  {
-    code: 'edit',
-    name: 'Edit Data'
-  },
-  {
-    code: 'update',
-    name: 'Update Data'
-  },
-  {
-    code: 'delete',
-    name: 'Delete Data'
-  }
-]
+export const permissions = dataPermission as TPermissionSeed[]
 
 export const insertPermissionSeeder = async () => {
   return await AppDataSource.transaction(async (trx) => {
-    for (const item of permissions) {
-      console.log('----------------------------------------------')
-      console.log('FINDING permission ', item?.code)
-      const existing = await repository.findBy(FeatureAction, { field: 'code', value: item.code, withDeleted: true }, trx)
-      if (!existing) {
-        console.log('Permission not found')
-        console.log('CREATING new permission')
-        await repository.create(FeatureAction, { ...item, isActive: true }, trx)
-        console.log('CREATED.....')
-      } else {
-        console.log('Permission found, skipped')
+    const totalPermission = await repository.count(FeatureAction, { withDeleted: true }, trx)
+    if (totalPermission >= permissions.length) {
+      console.log(`${totalPermission} Permissions already seeded, skipped...`)
+    } else {
+      for (const item of permissions) {
+        console.log('----------------------------------------------')
+        console.log('FINDING permission ', item?.code)
+        const existing = await repository.findBy(FeatureAction, { field: 'code', value: item.code, withDeleted: true }, trx)
+        if (!existing) {
+          console.log('Permission not found')
+          console.log('CREATING new permission')
+          await repository.create(FeatureAction, { ...item, isActive: true }, trx)
+          console.log('CREATED.....')
+        } else {
+          console.log('Permission found, skipped')
+        }
       }
     }
   })

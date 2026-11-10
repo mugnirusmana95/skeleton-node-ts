@@ -34,40 +34,45 @@ const defaultPassword = process.env.DEFAULT_PASSWORD || ""
 
 export const insertUserSeeder = async () => {
   return await AppDataSource.transaction(async (trx) => {
-    for (const item of users) {
-      console.log('----------------------------------------------')
-      console.log('FINDING ROLE ', item.role)
-      const role = await repository.findBy(Role, { field: 'code', value: item.role }, trx)
-      if (role) {
-        console.log('ROLE FOUND')
-        console.log('FINDING USER ', item.email)
-        const user = await repository.findBy(User, { field: 'email', value: item.email }, trx)
+    const totalUser = await repository.count(User, { withDeleted: true }, trx)
+    if (totalUser >= users.length) {
+      console.log(`Default users already seeded, skipped...`)
+    } else {
+      for (const item of users) {
+        console.log('----------------------------------------------')
+        console.log('FINDING ROLE ', item.role)
+        const role = await repository.findBy(Role, { field: 'code', value: item.role, withDeleted: true }, trx)
+        if (role) {
+          console.log('ROLE FOUND')
+          console.log('FINDING USER ', item.email)
+          const user = await repository.findBy(User, { field: 'email', value: item.email, withDeleted: true }, trx)
 
-        if (!user) {
-          console.log('USER NOT FOUND')
-          const hashedPassword = await generateHash(defaultPassword)
-          console.log('CREATING user')
-          const user = await repository.create(User, {
-            email: item.email,
-            password: hashedPassword,
-            roleId: role?.id,
-            status: EUserStatusEntity.ACTIVE,
-          }, trx)
-          console.log('CREATED...')
+          if (!user) {
+            console.log('USER NOT FOUND')
+            const hashedPassword = await generateHash(defaultPassword)
+            console.log('CREATING user')
+            const user = await repository.create(User, {
+              email: item.email,
+              password: hashedPassword,
+              roleId: role?.id,
+              status: EUserStatusEntity.ACTIVE,
+            }, trx)
+            console.log('CREATED...')
 
-          console.log('CREATING PROFILE')
-          await repository.create(Profile, {
-            userId: user.id,
-            firstName: item.firstName,
-            middleName: item.middleName,
-            lastName: item.lastName,
-          }, trx)
-          console.log('CREATED...')
+            console.log('CREATING PROFILE')
+            await repository.create(Profile, {
+              userId: user.id,
+              firstName: item.firstName,
+              middleName: item.middleName,
+              lastName: item.lastName,
+            }, trx)
+            console.log('CREATED...')
+          } else {
+            console.log('USER Found, Skipped...')
+          }
         } else {
-          console.log('USER Found, Skipped...')
+          console.log('ROLE Not Found, Skipped...')
         }
-      } else {
-        console.log('ROLE Not Found, Skipped...')
       }
     }
   })

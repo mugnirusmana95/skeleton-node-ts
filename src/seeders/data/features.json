@@ -1,0 +1,38 @@
+[
+  {
+    "code": "role",
+    "name": "Role"
+  },
+  {
+    "code": "user",
+    "name": "User"
+  },
+  {
+    "code": "feature",
+    "name": "Feature"
+  },
+  {
+    "code": "country",
+    "name": "Country"
+  },
+  {
+    "code": "regency",
+    "name": "Regency"
+  },
+  {
+    "code": "district",
+    "name": "District"
+  },
+  {
+    "code": "Village",
+    "name": "Village"
+  },
+  {
+    "code": "zipcode",
+    "name": "Zip Code"
+  },
+  {
+    "code": "phonecode",
+    "name": "Phone Code"
+  }
+]

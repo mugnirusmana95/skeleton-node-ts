@@ -1,51 +1,38 @@
 import { AppDataSource } from '~/configs/dataSource'
+
 import { Country } from '~/entities/countryEntity'
 import { District } from '~/entities/districtEntity'
 import { Province } from '~/entities/provinceEntity'
 import { Regency } from '~/entities/regencyEntity'
 import { Village } from '~/entities/villageEntity'
+import { ZipCode } from '~/entities/zipCodeEntity'
+
 import repository from '~/repositories'
+
 import dataProvinces from '~/seeders/data/provinces.json'
 import dataRegencies from '~/seeders/data/regencies.json'
 import dataDistricts from '~/seeders/data/districts.json'
 import dataVillages from '~/seeders/data/villages.json'
 import dataZipCodes from '~/seeders/data/zipcodes.json'
-import { ZipCode } from '~/entities/zipCodeEntity'
 
 type TZipCode = Record<string, string>
 
-type TZipCodes = TZipCode[]
-
-type TVillage = {
+type TRegion = {
   kode: string,
   nama: string,
 }
 
-type TDistrict = {
-  kode: string,
-  nama: string,
-}
+const provinces = dataProvinces as TRegion[]
+const regencies = dataRegencies as TRegion[]
+const districts = dataDistricts as TRegion[]
+const villages = dataVillages as TRegion[]
 
-type TRegency = {
-  kode: string,
-  nama: string,
-}
-
-type TProvince = {
-  kode: string,
-  nama: string,
-}
+const zipcode = dataZipCodes as TZipCode
 
 export const insertIndonesianRegionalSeeder = async () => {
   return AppDataSource.transaction(async (trx) => {
-    let provinces = dataProvinces as TProvince[]
-    let regencies = dataRegencies as TRegency[]
-    let districts = dataDistricts as TDistrict[]
-    let villages = dataVillages as TVillage[]
-    let zipcode = dataZipCodes as TZipCode
-
-    const totalProvince = await repository.count(Province, {})
-    if (totalProvince >= 38) {
+    const totalProvince = await repository.count(Province, { withDeleted: true }, trx)
+    if (totalProvince >= provinces.length) {
       console.log(`${totalProvince} Provinces already seeded, skipped...`)
     } else {
       console.log('----------------------------------------------')
@@ -62,7 +49,8 @@ export const insertIndonesianRegionalSeeder = async () => {
           console.log('FINDING Province ', itemProvince.kode?.split('.').join(''))
           const checkProvince = await repository.findBy(Province, {
             field: 'code',
-            value: itemProvince.kode
+            value: itemProvince.kode,
+            withDeleted: true
           }, trx)
           if (!checkProvince) {
             console.log('Province not found')
@@ -80,8 +68,8 @@ export const insertIndonesianRegionalSeeder = async () => {
       }
     }
 
-    const totalRegency = await repository.count(Regency, {})
-    if (totalRegency >= 514) {
+    const totalRegency = await repository.count(Regency, { withDeleted: true }, trx)
+    if (totalRegency >= regencies.length) {
       console.log(`${totalRegency} Regencies already seeded, skipped...`)
     } else {
       for (const itemRegency of regencies) {
@@ -90,14 +78,16 @@ export const insertIndonesianRegionalSeeder = async () => {
         console.log('FINDING Province ', provinceCode)
         const province = await repository.findBy(Province, {
           field: 'code',
-          value: provinceCode
+          value: provinceCode,
+          withDeleted: true
         })
         if (province) {
           console.log('Province found')
           console.log('FINDING Regency ', itemRegency.kode?.split('.').join(''))
           const checkRegency = await repository.findBy(Regency, {
             field: 'code',
-            value: itemRegency.kode?.split('.').join('')
+            value: itemRegency.kode?.split('.').join(''),
+            withDeleted: true
           }, trx)
           if (!checkRegency) {
             console.log('Regency not found')
@@ -117,8 +107,8 @@ export const insertIndonesianRegionalSeeder = async () => {
       }
     }
 
-    const totalDistrict = await repository.count(District, {})
-    if (totalDistrict >= 7285) {
+    const totalDistrict = await repository.count(District, { withDeleted: true }, trx)
+    if (totalDistrict >= districts.length) {
       console.log(`${totalDistrict} Districts already seeded, skipped...`)
     } else {
       for (const itemDistrict of districts) {
@@ -127,14 +117,16 @@ export const insertIndonesianRegionalSeeder = async () => {
         console.log('FINDING Regency ', regencyCode?.split('.').join(''))
         const regency = await repository.findBy(Regency, {
           field: 'code',
-          value: regencyCode
+          value: regencyCode,
+          withDeleted: true
         })
         if (regency) {
           console.log('Regency found')
-          console.log('FINDING District ', itemDistrict.kode)
+          console.log('FINDING District ', itemDistrict.kode?.split('.').join(''))
           const checkDistrict = await repository.findBy(District, {
             field: 'code',
-            value: itemDistrict.kode?.split('.').join('')
+            value: itemDistrict.kode?.split('.').join(''),
+            withDeleted: true
           }, trx)
           if (!checkDistrict) {
             console.log('District not found')
@@ -154,8 +146,8 @@ export const insertIndonesianRegionalSeeder = async () => {
       }
     }
 
-    const totalVillage = await repository.count(Village, {})
-    if (totalVillage >= 83762) {
+    const totalVillage = await repository.count(Village, { withDeleted: true }, trx)
+    if (totalVillage >= villages.length) {
       console.log(`${totalVillage} Villages already seeded, skipped...`)
     } else {
       for (const itemVillage of villages) {
@@ -164,14 +156,16 @@ export const insertIndonesianRegionalSeeder = async () => {
         console.log('FINDING District ', districtCode)
         const district = await repository.findBy(District, {
           field: 'code',
-          value: districtCode
+          value: districtCode,
+          withDeleted: true
         })
         if (district) {
           console.log('District found')
           console.log('FINDING Village ', itemVillage.kode?.split('.').join(''))
           const checkVillage = await repository.findBy(Village, {
             field: 'code',
-            value: itemVillage.kode?.split('.').join('')
+            value: itemVillage.kode?.split('.').join(''),
+            withDeleted: true
           }, trx)
           if (!checkVillage) {
             console.log('Village not found')
@@ -191,8 +185,8 @@ export const insertIndonesianRegionalSeeder = async () => {
       }
     }
 
-    const totalZipCode = await repository.count(ZipCode, {})
-    if (totalZipCode >= 83762) {
+    const totalZipCode = await repository.count(ZipCode, { withDeleted: true }, trx)
+    if (totalZipCode >= Object.entries(zipcode).length) {
       console.log(`${totalZipCode} ZipCodes already seeded, skipped...`)
     } else {
       for (const itemZipCode of Object.entries(zipcode)) {
@@ -202,14 +196,16 @@ export const insertIndonesianRegionalSeeder = async () => {
         console.log('FINDING Village ', villageCode)
         const village = await repository.findBy(Village, {
           field: 'code',
-          value: villageCode
+          value: villageCode,
+          withDeleted: true
         })
         if (village) {
           console.log('Village found')
           console.log('FINDING ZipCode ', villageCode)
           const checkZipCode = await repository.findBy(ZipCode, {
             field: 'code',
-            value: kode?.split('.').join('')
+            value: kode?.split('.').join(''),
+            withDeleted: true
           }, trx)
           if (!checkZipCode) {
             console.log('Village not found')

@@ -10,21 +10,23 @@ type TCountryPhoneCode = {
   dial_code: string,
 }
 
+const countryPhoneCodes: TCountryPhoneCode[] = data
+
 export const insertCountryAndPhoneCodesSeeder = () => {
   return AppDataSource.transaction(async (trx) => {
-    const totalCountry = await repository.count(Country, {})
-    if (totalCountry >= 242) {
-      console.log('Country and Phone Codes already seeded, skipped...')
+    const totalCountry = await repository.count(Country, { withDeleted: true }, trx)
+    if (totalCountry >= countryPhoneCodes.length) {
+      console.log('Countries and Phone Codes already seeded, skipped...')
       return null
     }
 
-    const countryPhoneCodes = data as TCountryPhoneCode[]
     for (const item of countryPhoneCodes) {
       console.log('----------------------------------------------')
       console.log('FINDING Country ', item.code)
       const hasCountry = await repository.findBy(Country, {
         field: 'code',
-        value: item.code
+        value: item.code,
+        withDeleted: true
       }, trx)
       if (!hasCountry) {
         console.log('Country not found')
@@ -37,7 +39,8 @@ export const insertCountryAndPhoneCodesSeeder = () => {
         console.log('FINDING Phone Code ', item.dial_code)
         const hasPhoneCode = await repository.findBy(PhoneCode, {
           field: 'code',
-          value: item.dial_code
+          value: item.dial_code,
+          withDeleted: true
         }, trx)
         if (!hasPhoneCode) {
           console.log('Phone Code not found')

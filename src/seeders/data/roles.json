@@ -1,0 +1,18 @@
+[
+  {
+    "code": "su",
+    "name": "Superadmin"
+  },
+  {
+    "code": "admin",
+    "name": "Admin"
+  },
+  {
+    "code": "staff",
+    "name": "Staff"
+  },
+  {
+    "code": "user",
+    "name": "User"
+  }
+]
