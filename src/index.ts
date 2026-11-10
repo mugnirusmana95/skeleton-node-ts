@@ -37,7 +37,7 @@ app.use(routeNotFoundMiddleware)
 app.use(errorMiddleware)
 
 if (!MODE || !MODE_ALLOWED.includes(MODE)) {
-  console.error(`env.MODE only allowed: ${MODE_ALLOWED.join(', ')}`)
+  console.error(`APP Is Not Running, env.MODE only allowed: ${MODE_ALLOWED.join(', ')}`)
   process.exit(1)
 }
 

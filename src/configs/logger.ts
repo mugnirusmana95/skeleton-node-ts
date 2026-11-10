@@ -1,12 +1,12 @@
 import pino from 'pino'
 
 const mode = process.env.MODE ?? 'development'
-const isProduction = mode === 'production'
+const isActive = process.env.AXIOM_IS_ACTIVE === 'true'
 const isLocalhost = mode === 'localhost'
 
 const targets: pino.TransportTargetOptions[] = []
 
-if (!isLocalhost) {
+if (isActive) {
   targets.push({
     target: '@axiomhq/pino',
     level: process.env.LOG_LEVEL ?? 'info',
@@ -16,28 +16,28 @@ if (!isLocalhost) {
       edge: 'us-east-1.aws.edge.axiom.co',
     },
   })
+}
 
-  if (!isProduction) {
-    targets.push({
-      target: 'pino-pretty',
-      level: process.env.LOG_LEVEL ?? 'info',
-      options: {
-        colorize: true,
-        translateTime: 'SYS:standard',
-        ignore: 'pid,hostname',
-      },
-    })
-  }
+if (!isActive && !isLocalhost) {
+  targets.push({
+    target: 'pino-pretty',
+    level: process.env.LOG_LEVEL ?? 'info',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+    },
+  })
 }
 
 export const logger = pino(
   {
-    level: isLocalhost ? 'silent' : process.env.LOG_LEVEL ?? 'info',
+    level: process.env.LOG_LEVEL,
     base: {
       service: String(process.env.NAME),
       environment: mode,
     },
     timestamp: pino.stdTimeFunctions.isoTime,
   },
-  ...(isLocalhost ? [] : [pino.transport({ targets })]),
+  ...(targets.length > 0 ? [pino.transport({ targets })] : []),
 )
