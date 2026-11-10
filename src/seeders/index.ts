@@ -58,7 +58,6 @@ export const runSeeders = async () => {
     const durationFixed = Number(duration.toFixed(0))
     const durationDecimal = Number(duration.toFixed(2))
 
-
     console.log('============================================================')
     console.log(`🎉 ALL SEEDER FINISHED WITHIN ${durationFixed <= 0 ? durationDecimal : durationFixed}s`)
     console.log('============================================================\n')
